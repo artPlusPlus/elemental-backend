@@ -1,0 +1,31 @@
+package:
+  name: elemental-backend
+  version: "0.1.0"
+
+source:
+  git_url: https://github.com/artplusplus/elemental-backend.git
+  git_rev: v0.1.0
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python
+    - setuptools
+  run:
+    - python
+
+test:
+  requires:
+    - pytest
+  imports:
+    - elemental_backend
+  commands:
+    - pytest tests
+
+about:
+  home: https://github.com/artplusplus/elemental-backend.
+  summary: elemental-backend provides a data backend for elemental cms.
+  license: MPLv2
+  license_file: LICENSE
