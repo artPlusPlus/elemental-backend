@@ -21,8 +21,6 @@ test:
     - pytest
   imports:
     - elemental_backend
-  commands:
-    - pytest tests
 
 about:
   home: https://github.com/artplusplus/elemental-backend.

@@ -73,7 +73,7 @@ Temporary Items
 # =========================
 # Dev Files
 # =========================
-logs
-envs
-scratch
-tests/.cache
+logs/
+envs/
+scratch/
+tests/.cache/
