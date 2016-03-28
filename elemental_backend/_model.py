@@ -159,7 +159,7 @@ class Model(object):
                     'Model Integrity Compromised: '
                     'Registration rollback failed\n\t{2}'
                 )
-                msg = msg.format(repr(problem_registrar),
+                msg = msg.format(problem_registrar.__name__,
                                  str(registrar_error),
                                  '\n\t'.join(rollback_errors))
             else:
@@ -169,7 +169,8 @@ class Model(object):
                     'Model integrity recovered: '
                     'Registration rollback succeeded'
                 )
-                msg = msg.format(problem_registrar.__name__, registrar_error)
+                msg = msg.format(problem_registrar.__name__,
+                                 str(registrar_error))
 
             _LOG.error(msg)
             raise ResourceNotRegisteredError(msg, resource_type=type(resource),
@@ -321,7 +322,7 @@ class Model(object):
                     'Model Integrity Compromised: '
                     'Deregistration rollback failed\n\t{2}'
                 )
-                msg = msg.format(repr(problem_deregistrar),
+                msg = msg.format(problem_deregistrar.__name__,
                                  str(deregistrar_error),
                                  '\n\t'.join(rollback_errors))
             else:
@@ -332,7 +333,7 @@ class Model(object):
                     'Deregistration rollback succeeded'
                 )
                 msg = msg.format(problem_deregistrar.__name__,
-                                 deregistrar_error)
+                                 str(deregistrar_error))
 
             _LOG.error(msg)
             raise ResourceNotReleasedError(msg, resource_type=type(result),
@@ -419,11 +420,17 @@ class Model(object):
                                         resource_id=resource.id)
 
     def _register_content_type(self, content_type):
+        map_type_instances = self._map__content_type__content_instances
+        if content_type.id not in map_type_instances:
+            map_type_instances[content_type.id] = weakref.WeakSet()
+
         map_at_ct = self._map__attribute_type__content_type
         for attribute_type_id in content_type.attribute_type_ids:
             map_at_ct[attribute_type_id] = content_type.id
 
     def _deregister_content_type(self, content_type):
+        del self._map__content_type__content_instances[content_type.id]
+
         map_at_ct = self._map__attribute_type__content_type
         for attribute_type_id in content_type.attribute_type_ids:
             del map_at_ct[attribute_type_id]
@@ -447,7 +454,7 @@ class Model(object):
         except KeyError:
             content_instances = weakref.WeakSet()
             map_type_instances[content_instance.type_id] = content_instances
-        content_instances.add(content_instance)
+        content_instances.add(content_instance.id)
 
         map_ai_ci = self._map__attribute_instance__content_instance
         for attribute_id in content_instance.attribute_ids:
@@ -458,23 +465,33 @@ class Model(object):
         try:
             content_instances = map_type_instances[content_instance.type_id]
         except KeyError:
-            return
-        try:
-            content_instances.remove(content_instance)
-        except KeyError:
             pass
+        else:
+            try:
+                content_instances.remove(content_instance.id)
+            except KeyError:
+                pass
 
         map_ai_ci = self._map__attribute_instance__content_instance
         for attribute_id in content_instance.attribute_ids:
-            del map_ai_ci[attribute_id]
+            try:
+                del map_ai_ci[attribute_id]
+            except KeyError:
+                pass
 
     def _register_attribute_type(self, attribute_type):
-        pass
+        map_type_instances = self._map__attribute_type__attribute_instances
+        if attribute_type.id not in map_type_instances:
+            map_type_instances[attribute_type.id] = weakref.WeakSet()
 
     def _deregister_attribute_type(self, attribute_type):
-        pass
+        del self._map__attribute_type__attribute_instances[attribute_type.id]
 
     def _register_attribute_instance(self, attribute_instance):
+        """
+        Note: No entry should be made to _map__attribute_instance__content_instance.
+            Only when a ContentInstance is registered should an entry be made.
+        """
         if not attribute_instance.type_id:
             msg = (
                 'Failed to register resource "{0}": '
@@ -496,9 +513,6 @@ class Model(object):
             map_type_instances[attribute_instance.type_id] = attribute_instances
         attribute_instances.add(attribute_instance)
 
-        map_ai_ci = self._map__attribute_instance__content_instance
-        map_ai_ci[attribute_instance.id] = None
-
     def _deregister_attribute_instance(self, attribute_instance):
         map_type_instances = self._map__attribute_type__attribute_instances
         try:
@@ -511,4 +525,7 @@ class Model(object):
             pass
 
         map_ai_ci = self._map__attribute_instance__content_instance
-        del map_ai_ci[attribute_instance.id]
+        try:
+            del map_ai_ci[attribute_instance.id]
+        except KeyError:
+            pass
