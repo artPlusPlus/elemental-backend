@@ -1,7 +1,7 @@
 import uuid
 
 
-_BASE_ATTR_TYPE_DATA = {
+DATA_ATTR_TYPE_NAME = {
     'id': str(uuid.uuid4()),
     'name': 'name',
     'default_value': None,
@@ -10,17 +10,17 @@ _BASE_ATTR_TYPE_DATA = {
 }
 
 
-_BASE_CONTENT_TYPE_DATA = {
+DATA_CONTENT_TYPE_BASE = {
     'id': str(uuid.uuid4()),
     'name': 'BaseContentType',
     'base_ids': [],
     'attribute_type_ids': [
-        str(_BASE_ATTR_TYPE_DATA['id'])
+        str(DATA_ATTR_TYPE_NAME['id'])
     ]
 }
 
 
-_SUB_ATTR_TYPE_DATA = {
+DATA_ATTR_TYPE_PATH = {
     'id': str(uuid.uuid4()),
     'name': 'depot_path',
     'default_value': None,
@@ -29,39 +29,39 @@ _SUB_ATTR_TYPE_DATA = {
 }
 
 
-_SUB_CONTENT_TYPE_DATA = {
+DATA_CONTENT_TYPE_SUB = {
     'id': str(uuid.uuid4()),
     'name': 'SubContentType',
     'base_ids': [
-        _BASE_CONTENT_TYPE_DATA['id']
+        DATA_CONTENT_TYPE_BASE['id']
     ],
     'attribute_type_ids': [
-        str(_SUB_ATTR_TYPE_DATA)
+        str(DATA_ATTR_TYPE_PATH['id'])
     ]
 }
 
 
-_SUB_ATTR_NAME_DATA = {
-    'type_id': _BASE_ATTR_TYPE_DATA['id'],
+DATA_ATTR_INST_NAME = {
+    'type_id': DATA_ATTR_TYPE_NAME['id'],
     'source_id': None,
     'id': str(uuid.uuid4()),
     'value': 'MyAsset'
 }
 
 
-_SUB_ATTR_DEPOT_PATH_DATA = {
-    'type_id': _SUB_ATTR_TYPE_DATA['id'],
+DATA_ATTR_INST_PATH = {
+    'type_id': DATA_ATTR_TYPE_PATH['id'],
     'source_id': None,
     'id': str(uuid.uuid4()),
     'value': '//depot/foo.txt'
 }
 
 
-_SUB_CONTENT_INSTANCE_DATA = {
-    'type_id': _SUB_CONTENT_TYPE_DATA['id'],
+DATA_CONTENT_INST = {
+    'type_id': DATA_CONTENT_TYPE_SUB['id'],
     'id': str(uuid.uuid4()),
     'attribute_ids': [
-        str(_SUB_ATTR_NAME_DATA['id']),
-        str(_SUB_ATTR_DEPOT_PATH_DATA['id'])
+        str(DATA_ATTR_INST_NAME['id']),
+        str(DATA_ATTR_INST_PATH['id'])
     ]
 }

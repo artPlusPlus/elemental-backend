@@ -1,5 +1,5 @@
 import logging
-
+import weakref
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,35 +17,93 @@ class ElementalError(Exception):
         return self._message
 
 
+class TransactionError(ElementalError):
+    @property
+    def transaction(self):
+        if self._transaction:
+            return self._transaction()
+        return self._transaction
+
+    def __init__(self, message, inner_error=None, transaction=None):
+        super(TransactionError, self).__init__(
+            message, inner_error=inner_error)
+
+        try:
+            self._transaction = weakref.ref(transaction)
+        except TypeError:
+            self._transaction = transaction
+
+
+class InvalidTransactionAction(TransactionError):
+    @property
+    def invalid_action(self):
+        return self._invalid_action
+
+    def __init__(self, message, inner_error=None, transaction=None,
+                 invalid_action=None):
+        super(InvalidTransactionAction, self).__init__(
+            message, inner_error=inner_error, transaction=transaction)
+
+        self._invalid_action = invalid_action
+
+
 class DeserializerError(ElementalError):
     @property
-    def deserializer_id(self):
-        return self._deserializer_id
+    def resource_type(self):
+        return self._resource_type
 
-    def __init__(self, message, inner_error=None, deserializer_id=None):
+    @property
+    def data_format(self):
+        return self._data_format
+
+    def __init__(self, message, inner_error=None, resource_type=None,
+                 data_format=None):
         super(DeserializerError, self).__init__(
             message, inner_error=inner_error)
 
-        self._deserializer_id = deserializer_id
+        self._resource_type = resource_type
+        self._data_format = data_format
 
 
 class DeserializerNotFoundError(DeserializerError):
     pass
 
 
+class InvalidDeserializerKeyError(DeserializerError):
+    pass
+
+
 class SerializerError(ElementalError):
     @property
-    def serializer_id(self):
-        return self._serializer_id
+    def resource_type(self):
+        return self._resource_type
 
-    def __init__(self, message, inner_error=None, serializer_id=None):
+    @property
+    def data_format(self):
+        return self._data_format
+
+    def __init__(self, message, inner_error=None, resource_type=None,
+                 data_format=None):
         super(SerializerError, self).__init__(
             message, inner_error=inner_error)
 
-        self._serializer_id = serializer_id
+        self._resource_type = resource_type
+        self._data_format = data_format
 
 
 class SerializerNotFoundError(SerializerError):
+    pass
+
+
+class InvalidSerializerKeyError(SerializerError):
+    pass
+
+
+class HandlerError(SerializerError):
+    pass
+
+
+class InvalidHandlerKeyError(HandlerError):
     pass
 
 
@@ -87,6 +145,10 @@ class ResourceNotFoundError(ResourceError):
     pass
 
 
+class ResourceNotCreatedError(ResourceError):
+    pass
+
+
 class ResourceNotRegisteredError(ResourceError):
     pass
 
@@ -100,6 +162,10 @@ class ResourceNotDeletedError(ResourceError):
 
 
 class ResourceNotReleasedError(ResourceError):
+    pass
+
+
+class ResourceNotUpdatedError(ResourceError):
     pass
 
 

@@ -4,6 +4,14 @@ import pytest
 
 import elemental_backend as backend
 
+from tests import resource_data
+
+
+@pytest.fixture(scope='module')
+def controller():
+    model = backend.Model()
+    return backend.Controller(model)
+
 
 @pytest.fixture(scope='module')
 def model():
@@ -13,11 +21,11 @@ def model():
 @pytest.fixture(scope='module')
 def attribute_type_name():
     resource = backend.AttributeType(
-        id=uuid.uuid4(),
-        name='Name',
-        default_value=backend.NO_VALUE,
-        kind_id='str',
-        kind_properties=None
+        id=resource_data.DATA_ATTR_TYPE_NAME['id'],
+        name=resource_data.DATA_ATTR_TYPE_NAME['name'],
+        default_value=resource_data.DATA_ATTR_TYPE_NAME['default_value'],
+        kind_id=resource_data.DATA_ATTR_TYPE_NAME['kind_id'],
+        kind_properties=resource_data.DATA_ATTR_TYPE_NAME['kind_properties']
     )
     return resource
 
@@ -25,63 +33,62 @@ def attribute_type_name():
 @pytest.fixture(scope='module')
 def attribute_type_path():
     resource = backend.AttributeType(
-        id=uuid.uuid4(),
-        name='Path',
-        default_value=backend.NO_VALUE,
-        kind_id='str',
-        kind_properties=None
+        id=resource_data.DATA_ATTR_TYPE_PATH['id'],
+        name=resource_data.DATA_ATTR_TYPE_PATH['name'],
+        default_value=resource_data.DATA_ATTR_TYPE_PATH['default_value'],
+        kind_id=resource_data.DATA_ATTR_TYPE_PATH['kind_id'],
+        kind_properties=resource_data.DATA_ATTR_TYPE_PATH['kind_properties']
     )
     return resource
 
 
 @pytest.fixture(scope='module')
-def attribute_inst_name(attribute_type_name):
+def attribute_inst_name():
     resource = backend.AttributeInstance(
-        id=uuid.uuid4(),
-        type_id=attribute_type_name.id,
-        value='FIXTURE_ATTR_INST_NAME'
+        id=resource_data.DATA_ATTR_INST_NAME['id'],
+        type_id=resource_data.DATA_ATTR_INST_NAME['type_id'],
+        value=resource_data.DATA_ATTR_INST_NAME['value']
     )
     return resource
 
 
 @pytest.fixture(scope='module')
-def attribute_inst_path(attribute_type_path):
+def attribute_inst_path():
     resource = backend.AttributeInstance(
-        id=uuid.uuid4(),
-        type_id=attribute_type_path.id,
-        value='FIXTURE_ATTR_INST_PATH'
+        id=resource_data.DATA_ATTR_INST_PATH['id'],
+        type_id=resource_data.DATA_ATTR_INST_PATH['type_id'],
+        value=resource_data.DATA_ATTR_INST_PATH['value']
     )
     return resource
 
 
 @pytest.fixture(scope='module')
-def content_type_base(attribute_type_name):
+def content_type_base():
     resource = backend.ContentType(
-        id=uuid.uuid4(),
-        name='FIXTURE_BASE',
-        base_ids=None,
-        attribute_type_ids=[attribute_type_name.id]
+        id=resource_data.DATA_CONTENT_TYPE_BASE['id'],
+        name=resource_data.DATA_CONTENT_TYPE_BASE['name'],
+        base_ids=resource_data.DATA_CONTENT_TYPE_BASE['base_ids'],
+        attribute_type_ids=resource_data.DATA_CONTENT_TYPE_BASE['attribute_type_ids']
     )
     return resource
 
 
 @pytest.fixture(scope='module')
-def content_type_sub(content_type_base, attribute_type_path):
+def content_type_sub():
     resource = backend.ContentType(
-        id=uuid.uuid4(),
-        name='FIXTURE_SUB',
-        base_ids=[content_type_base.id],
-        attribute_type_ids=[attribute_type_path.id]
+        id=resource_data.DATA_CONTENT_TYPE_SUB['id'],
+        name=resource_data.DATA_CONTENT_TYPE_SUB['name'],
+        base_ids=resource_data.DATA_CONTENT_TYPE_SUB['base_ids'],
+        attribute_type_ids=resource_data.DATA_CONTENT_TYPE_SUB['attribute_type_ids']
     )
     return resource
 
 
 @pytest.fixture(scope='module')
-def content_inst_sub(content_type_sub, attribute_inst_name,
-                     attribute_inst_path):
+def content_inst_sub():
     resource = backend.ContentInstance(
-        id=uuid.uuid4(),
-        type_id=content_type_sub.id,
-        attribute_ids=(attribute_inst_name.id, attribute_inst_path.id)
+        id=resource_data.DATA_CONTENT_INST['id'],
+        type_id=resource_data.DATA_CONTENT_INST['type_id'],
+        attribute_ids=resource_data.DATA_CONTENT_INST['attribute_ids']
     )
     return resource

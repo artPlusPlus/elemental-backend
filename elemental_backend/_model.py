@@ -7,7 +7,7 @@ from ._content_instance import ContentInstance
 from ._attribute_type import AttributeType
 from ._attribute_instance import AttributeInstance
 from ._util import process_uuid_value
-from ._errors import (
+from .errors import (
     ResourceNotFoundError,
     ResourceNotRegisteredError,
     ResourceCollisionError,

@@ -71,7 +71,7 @@ def serialize_attribute_type(attribute_type):
     data = {
         'id': str(attribute_type.id),
         'name': str(attribute_type.name),
-        'default_value': str(attribute_type.default_value),
+        'default_value': attribute_type.default_value,
         'kind_id': str(attribute_type.kind_id),
         'kind_properties': attribute_type.kind_properties
     }
@@ -124,8 +124,8 @@ def serialize_content_instance(content_instance):
     data = {
         'id': str(content_instance.id),
         'type_id': str(content_instance.type_id),
-        'attribute_instance_ids': [str(aid) for aid in
-                                   content_instance.attribute_instance_ids]
+        'attribute_ids': [str(aid) for aid in
+                          content_instance.attribute_ids]
     }
 
     data = _json.dumps(data)
@@ -150,11 +150,11 @@ def deserialize_content_instance(data, content_instance):
 
     id = data['id']
     type_id = data['type_id']
-    attribute_instance_ids = data['attribute_instance_ids']
+    attribute_ids = data['attribute_ids']
 
     content_instance.id = id
     content_instance.type_id = type_id
-    content_instance.attribute_instance_ids = attribute_instance_ids
+    content_instance.attribute_ids = attribute_ids
 
 
 def serialize_attribute_instance(attribute_instance):
@@ -169,10 +169,16 @@ def serialize_attribute_instance(attribute_instance):
         str: Raw JSON string containing `attribute_instance` data.
 
     """
+    if attribute_instance.source_id:
+        source_id = str(attribute_instance.source_id)
+    else:
+        source_id = attribute_instance.source_id
+
     data = {
         'id': str(attribute_instance.id),
         'type_id': str(attribute_instance.type_id),
-        'value': attribute_instance.value
+        'value': attribute_instance.value,
+        'source_id': source_id
     }
 
     data = _json.dumps(data)
@@ -198,11 +204,21 @@ def deserialize_attribute_instance(data, attribute_instance):
     id = data['id']
     type_id = data['type_id']
     value = data['value']
+    source_id = data['source_id']
 
     attribute_instance.id = id
     attribute_instance.type_id = type_id
     attribute_instance.value = value
+    attribute_instance.source_id = source_id
 
 
-def bind_json_serializers_to_controller(controller):
-    controller.serializer()
+def bind_to_controller(controller):
+    controller.serializer('ContentType', 'json')(serialize_content_type)
+    controller.serializer('AttributeType', 'json')(serialize_attribute_type)
+    controller.serializer('ContentInstance', 'json')(serialize_content_instance)
+    controller.serializer('AttributeInstance', 'json')(serialize_attribute_instance)
+
+    controller.deserializer('ContentType', 'json')(deserialize_content_type)
+    controller.deserializer('AttributeType', 'json')(deserialize_attribute_type)
+    controller.deserializer('ContentInstance', 'json')(deserialize_content_instance)
+    controller.deserializer('AttributeInstance', 'json')(deserialize_attribute_instance)

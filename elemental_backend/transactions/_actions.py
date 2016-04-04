@@ -1,4 +1,4 @@
-class TransactionActions(object):
+class Actions(object):
     GET = object(),
     PUT = object(),
     POST = object(),

@@ -34,11 +34,32 @@ class AttributeInstance(Resource):
         self._value = value
         # TODO: AttributeInstance.value changed event
 
-    def __init__(self, id=None, type_id=None, value=NO_VALUE):
+    @property
+    def source_id(self):
+        return self._source_id
+
+    @source_id.setter
+    def source_id(self, value):
+        try:
+            value = process_uuid_value(value)
+        except ValueError:
+            msg = 'Failed to set source id: "{0}" is not a valid UUID.'
+            msg = msg.format(value)
+            raise ValueError(msg)
+
+        if value == self._source_id:
+            return
+
+        self._source_id = value
+        # TODO: AttributeInstance.source_id changed event
+
+    def __init__(self, id=None, type_id=None, value=NO_VALUE, source_id=None):
         super(AttributeInstance, self).__init__(id=id)
 
         self._type_id = None
         self._value = None
+        self._source_id = None
 
         self.type_id = type_id
         self.value = value
+        self.source_id = source_id
