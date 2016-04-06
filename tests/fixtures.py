@@ -20,7 +20,7 @@ def model():
 
 @pytest.fixture(scope='module')
 def attribute_type_name():
-    resource = backend.AttributeType(
+    resource = backend.resources.AttributeType(
         id=resource_data.DATA_ATTR_TYPE_NAME['id'],
         name=resource_data.DATA_ATTR_TYPE_NAME['name'],
         default_value=resource_data.DATA_ATTR_TYPE_NAME['default_value'],
@@ -32,7 +32,7 @@ def attribute_type_name():
 
 @pytest.fixture(scope='module')
 def attribute_type_path():
-    resource = backend.AttributeType(
+    resource = backend.resources.AttributeType(
         id=resource_data.DATA_ATTR_TYPE_PATH['id'],
         name=resource_data.DATA_ATTR_TYPE_PATH['name'],
         default_value=resource_data.DATA_ATTR_TYPE_PATH['default_value'],
@@ -44,7 +44,7 @@ def attribute_type_path():
 
 @pytest.fixture(scope='module')
 def attribute_inst_name():
-    resource = backend.AttributeInstance(
+    resource = backend.resources.AttributeInstance(
         id=resource_data.DATA_ATTR_INST_NAME['id'],
         type_id=resource_data.DATA_ATTR_INST_NAME['type_id'],
         value=resource_data.DATA_ATTR_INST_NAME['value']
@@ -54,7 +54,7 @@ def attribute_inst_name():
 
 @pytest.fixture(scope='module')
 def attribute_inst_path():
-    resource = backend.AttributeInstance(
+    resource = backend.resources.AttributeInstance(
         id=resource_data.DATA_ATTR_INST_PATH['id'],
         type_id=resource_data.DATA_ATTR_INST_PATH['type_id'],
         value=resource_data.DATA_ATTR_INST_PATH['value']
@@ -64,7 +64,7 @@ def attribute_inst_path():
 
 @pytest.fixture(scope='module')
 def content_type_base():
-    resource = backend.ContentType(
+    resource = backend.resources.ContentType(
         id=resource_data.DATA_CONTENT_TYPE_BASE['id'],
         name=resource_data.DATA_CONTENT_TYPE_BASE['name'],
         base_ids=resource_data.DATA_CONTENT_TYPE_BASE['base_ids'],
@@ -75,7 +75,7 @@ def content_type_base():
 
 @pytest.fixture(scope='module')
 def content_type_sub():
-    resource = backend.ContentType(
+    resource = backend.resources.ContentType(
         id=resource_data.DATA_CONTENT_TYPE_SUB['id'],
         name=resource_data.DATA_CONTENT_TYPE_SUB['name'],
         base_ids=resource_data.DATA_CONTENT_TYPE_SUB['base_ids'],
@@ -86,7 +86,7 @@ def content_type_sub():
 
 @pytest.fixture(scope='module')
 def content_inst_sub():
-    resource = backend.ContentInstance(
+    resource = backend.resources.ContentInstance(
         id=resource_data.DATA_CONTENT_INST['id'],
         type_id=resource_data.DATA_CONTENT_INST['type_id'],
         attribute_ids=resource_data.DATA_CONTENT_INST['attribute_ids']

@@ -1,18 +1,20 @@
 import logging
 import weakref
 
-from ._resource import Resource
-from ._content_type import ContentType
-from ._content_instance import ContentInstance
-from ._attribute_type import AttributeType
-from ._attribute_instance import AttributeInstance
-from ._util import process_uuid_value
 from .errors import (
     ResourceNotFoundError,
     ResourceNotRegisteredError,
     ResourceCollisionError,
     ResourceNotReleasedError
 )
+from .resources import (
+    Resource,
+    ContentType,
+    AttributeType,
+    AttributeInstance,
+    ContentInstance
+)
+from ._util import process_uuid_value
 
 
 _LOG = logging.getLogger(__name__)

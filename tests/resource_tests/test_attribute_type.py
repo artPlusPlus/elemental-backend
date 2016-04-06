@@ -43,9 +43,9 @@ def test_attribute_type_instantiation(id, name, default_value, kind_id):
     default_value_value, default_value_expected = default_value
     kind_id_value, kind_id_expected = kind_id
 
-    at = backend.AttributeType(id=id_value, name=name_value,
-                               default_value=default_value_value,
-                               kind_id=kind_id_value)
+    at = backend.resources.AttributeType(id=id_value, name=name_value,
+                                         default_value=default_value_value,
+                                         kind_id=kind_id_value)
 
     assert at.id == id_expected
     assert at.name == name_expected

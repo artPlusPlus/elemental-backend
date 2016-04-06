@@ -1,5 +1,5 @@
 from ._resource import Resource
-from ._util import NO_VALUE, process_uuid_value
+from .._util import NO_VALUE, process_uuid_value
 
 
 class AttributeInstance(Resource):

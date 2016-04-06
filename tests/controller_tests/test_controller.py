@@ -136,13 +136,13 @@ class _GetParams(object):
         'json'
     ]
     resource_data = [
-        (resource_data.DATA_CONTENT_TYPE_BASE, backend.ContentType),
-        (resource_data.DATA_CONTENT_TYPE_SUB, backend.ContentType),
-        (resource_data.DATA_ATTR_TYPE_NAME, backend.AttributeType),
-        (resource_data.DATA_ATTR_TYPE_PATH, backend.AttributeType),
-        (resource_data.DATA_ATTR_INST_NAME, backend.AttributeInstance),
-        (resource_data.DATA_ATTR_INST_PATH, backend.AttributeInstance),
-        (resource_data.DATA_CONTENT_INST, backend.ContentInstance)
+        (resource_data.DATA_CONTENT_TYPE_BASE, backend.resources.ContentType),
+        (resource_data.DATA_CONTENT_TYPE_SUB, backend.resources.ContentType),
+        (resource_data.DATA_ATTR_TYPE_NAME, backend.resources.AttributeType),
+        (resource_data.DATA_ATTR_TYPE_PATH, backend.resources.AttributeType),
+        (resource_data.DATA_ATTR_INST_NAME, backend.resources.AttributeInstance),
+        (resource_data.DATA_ATTR_INST_PATH, backend.resources.AttributeInstance),
+        (resource_data.DATA_CONTENT_INST, backend.resources.ContentInstance)
     ]
 
 

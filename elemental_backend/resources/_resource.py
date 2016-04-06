@@ -1,4 +1,4 @@
-from ._util import process_uuid_value
+from .._util import process_uuid_value
 
 
 class Resource(object):

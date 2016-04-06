@@ -41,10 +41,10 @@ def test_content_instance_instantiation(id, type_id, attribute_ids):
     type_id_value, type_id_expected = type_id
     attribute_ids_value, attribute_ids_expected = attribute_ids
 
-    ci = backend.ContentInstance(id=id_value, type_id=type_id_value,
-                                 attribute_ids=attribute_ids_value)
+    ci = backend.resources.ContentInstance(id=id_value, type_id=type_id_value,
+                                           attribute_ids=attribute_ids_value)
 
-    assert isinstance(ci, backend.ContentInstance)
+    assert isinstance(ci, backend.resources.ContentInstance)
     assert ci.id == id_expected
     assert ci.type_id == type_id_expected
     assert ci.attribute_ids == attribute_ids_expected

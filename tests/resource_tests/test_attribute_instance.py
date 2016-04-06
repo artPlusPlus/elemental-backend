@@ -38,11 +38,11 @@ def test_attribute_instance_instantiation(id, type_id, value):
     type_id_value, type_id_expected = type_id
     value_value, value_expected = value
 
-    ai = backend.AttributeInstance(id=id_value,
-                                   type_id=type_id_value,
-                                   value=value_value)
+    ai = backend.resources.AttributeInstance(id=id_value,
+                                             type_id=type_id_value,
+                                             value=value_value)
 
-    assert isinstance(ai, backend.AttributeInstance)
+    assert isinstance(ai, backend.resources.AttributeInstance)
     assert ai.id == id_expected
     assert ai.type_id == type_id_expected
     assert ai.value == value_expected

@@ -25,13 +25,13 @@ class _RegistrationParams(object):
 def test_model_register_attribute_type(model, id):
     id_value, id_expected, id_error = id
 
-    resource = backend.AttributeType(id=id_value)
+    resource = backend.resources.AttributeType(id=id_value)
     resource = utils.register_resource(model, resource, id_error)
     if not resource:
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_type__resources[backend.AttributeType]
+    type_resources = model._map__resource_type__resources[backend.resources.AttributeType]
     assert resource.id in all_resources
     assert all_resources[resource.id] is resource
     assert resource.id in type_resources
@@ -56,7 +56,7 @@ def test_model_retrieve_attribute_type(model, id):
     if not resource:
         return
 
-    assert isinstance(resource, backend.AttributeType)
+    assert isinstance(resource, backend.resources.AttributeType)
     assert resource.id == id_expected
 
 
@@ -79,6 +79,6 @@ def test_model_release_attribute_type(model, id):
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_type__resources[backend.AttributeType]
+    type_resources = model._map__resource_type__resources[backend.resources.AttributeType]
     assert resource.id not in all_resources
     assert resource.id not in type_resources

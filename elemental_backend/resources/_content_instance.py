@@ -1,5 +1,5 @@
 from ._resource import Resource
-from ._util import process_uuid_value, process_uuids_value
+from .._util import process_uuid_value, process_uuids_value
 
 
 class ContentInstance(Resource):

@@ -35,7 +35,7 @@ def test_model_register_attribute_instance(model, id, type_id):
     id_value, id_expected, id_error = id
     type_id_value, typ_id_expected, type_id_error = type_id
 
-    resource = backend.AttributeInstance(id=id_value, type_id=type_id_value)
+    resource = backend.resources.AttributeInstance(id=id_value, type_id=type_id_value)
     resource = utils.register_resource(model, resource, id_error, type_id_error)
     if not resource:
         return
@@ -44,7 +44,7 @@ def test_model_register_attribute_instance(model, id, type_id):
     assert resource.id in all_resources
     assert all_resources[resource.id] is resource
 
-    type_resources = model._map__resource_type__resources[backend.AttributeInstance]
+    type_resources = model._map__resource_type__resources[backend.resources.AttributeInstance]
     assert resource.id in type_resources
     assert type_resources[resource.id] is resource
 
@@ -72,7 +72,7 @@ def test_model_retrieve_attribute_instance(model, id):
     if not resource:
         return
 
-    assert isinstance(resource, backend.AttributeInstance)
+    assert isinstance(resource, backend.resources.AttributeInstance)
     assert resource.id == id_expected
 
 
@@ -97,7 +97,7 @@ def test_model_release_attribute_instance(model, id):
     all_resources = model._resources
     assert resource.id not in all_resources
 
-    type_resources = model._map__resource_type__resources[backend.AttributeInstance]
+    type_resources = model._map__resource_type__resources[backend.resources.AttributeInstance]
     assert resource.id not in type_resources
 
     map_ai_ci = model._map__attribute_instance__content_instance

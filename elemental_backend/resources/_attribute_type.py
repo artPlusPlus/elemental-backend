@@ -1,5 +1,5 @@
 from ._resource import Resource
-from ._util import NO_VALUE
+from .._util import NO_VALUE
 
 
 class AttributeType(Resource):

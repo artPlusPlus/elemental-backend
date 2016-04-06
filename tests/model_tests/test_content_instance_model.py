@@ -35,13 +35,13 @@ def test_model_register_content_instance(model, id, type_id):
     id_value, id_expected, id_error = id
     type_id_value, typ_id_expected, type_id_error = type_id
 
-    resource = backend.ContentInstance(id=id_value, type_id=type_id_value)
+    resource = backend.resources.ContentInstance(id=id_value, type_id=type_id_value)
     resource = utils.register_resource(model, resource, id_error, type_id_error)
     if not resource:
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_type__resources[backend.ContentInstance]
+    type_resources = model._map__resource_type__resources[backend.resources.ContentInstance]
     assert resource.id in all_resources
     assert all_resources[resource.id] is resource
     assert resource.id in type_resources
@@ -66,7 +66,7 @@ def test_model_retrieve_content_instance(model, id):
     if not resource:
         return
 
-    assert isinstance(resource, backend.ContentInstance)
+    assert isinstance(resource, backend.resources.ContentInstance)
     assert resource.id == id_expected
 
 
@@ -89,6 +89,6 @@ def test_model_release_content_instance(model, id):
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_type__resources[backend.ContentInstance]
+    type_resources = model._map__resource_type__resources[backend.resources.ContentInstance]
     assert resource.id not in all_resources
     assert resource.id not in type_resources

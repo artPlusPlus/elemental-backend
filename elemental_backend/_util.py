@@ -44,17 +44,17 @@ def process_uuids_value(value):
 
 def process_resource_type_value(value):
     try:
-        if issubclass(value, elemental_backend.Resource):
+        if issubclass(value, elemental_backend.resources.Resource):
             return value
     except TypeError:
         pass
 
     value = str(value).lower().strip().replace(' ', '')
     resource_types = {
-        elemental_backend.ContentType.__name__.lower(): elemental_backend.ContentType,
-        elemental_backend.AttributeType.__name__.lower(): elemental_backend.AttributeType,
-        elemental_backend.ContentInstance.__name__.lower(): elemental_backend.ContentInstance,
-        elemental_backend.AttributeInstance.__name__.lower(): elemental_backend.AttributeInstance,
+        elemental_backend.resources.ContentType.__name__.lower(): elemental_backend.resources.ContentType,
+        elemental_backend.resources.AttributeType.__name__.lower(): elemental_backend.resources.AttributeType,
+        elemental_backend.resources.ContentInstance.__name__.lower(): elemental_backend.resources.ContentInstance,
+        elemental_backend.resources.AttributeInstance.__name__.lower(): elemental_backend.resources.AttributeInstance,
     }
     try:
         return resource_types[value]
