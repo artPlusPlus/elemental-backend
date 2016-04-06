@@ -1,5 +1,7 @@
 import logging
 import weakref
+import traceback
+import sys
 
 _LOG = logging.getLogger(__name__)
 
@@ -9,12 +11,17 @@ class ElementalError(Exception):
     def message(self):
         return self._message
 
+    @property
+    def traceback(self):
+        return self._traceback
+
     def __init__(self, message, inner_error=None):
         self._message = message
         self._inner_error = inner_error
+        self._traceback = traceback.format_tb(sys.exc_info()[-1])
 
     def __str__(self):
-        return self._message
+        return '{0}\n{1}'.format(self._message, self.traceback)
 
 
 class TransactionError(ElementalError):

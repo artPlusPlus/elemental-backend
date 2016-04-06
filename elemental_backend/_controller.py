@@ -319,27 +319,31 @@ class Controller(object):
         msg = msg.format(transaction.action, transaction.id)
         _LOG.info(msg)
 
-        action_processes = {
-            Actions.GET: (
+        processes = {
+            Actions.GET: deque((
                 self._resolve_resource,
-            ),
-            Actions.POST: (
+                self._resolve_transaction_outbound_serializer
+            )),
+            Actions.POST: deque((
+                self._resolve_transaction_inbound_deserializer,
                 self._create_resource,
                 self._update_resource,
                 self._register_resource
-            ),
-            Actions.PUT: (
+            )),
+            Actions.PUT: deque((
                 self._resolve_resource,
+                self._resolve_transaction_inbound_deserializer,
+                self._resolve_transaction_outbound_serializer,
                 self._update_resource
-            ),
-            Actions.DELETE: (
+            )),
+            Actions.DELETE: deque((
                 self._resolve_resource,
                 self._delete_resource
-            ),
+            ))
         }
 
         try:
-            action_processes = action_processes[transaction.action]
+            processes = processes[transaction.action]
         except KeyError:
             msg = (
                 'Failed to process Transaction "{0}": '
@@ -352,10 +356,10 @@ class Controller(object):
                 transaction=transaction)
             transaction.errors.append(e)
         else:
-            processes = deque()
-            processes.append(self._resolve_transaction_inbound_deserializer)
-            processes.extend(action_processes)
-            processes.append(self._resolve_transaction_outbound_serializer)
+            # processes = deque()
+            # processes.append(self._resolve_transaction_inbound_deserializer)
+            # processes.extend(action_processes)
+            # processes.append(self._resolve_transaction_outbound_serializer)
 
             try:
                 self._process_transaction(transaction, processes)
@@ -683,7 +687,7 @@ class Controller(object):
             transaction.errors.append(e)
         else:
             try:
-                self._model.release_resource(transaction.target_resource)
+                self._model.release_resource(transaction.resource_id)
             except Exception as e:
                 msg = 'Resource not deleted: {0} - {1}'
                 msg = msg.format(type(e).__name__, e)

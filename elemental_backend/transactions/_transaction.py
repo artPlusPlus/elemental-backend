@@ -36,6 +36,15 @@ class Transaction(object):
     def inbound_format(self):
         return self._inbound_format
 
+    @inbound_format.setter
+    def inbound_format(self, value):
+        value = process_data_format_value(value)
+        if value == self._inbound_format:
+            return
+
+        self._inbound_format = value
+        # TODO: Inbound Format changed event?
+
     @property
     def inbound_payload(self):
         return self._inbound_payload
@@ -43,6 +52,15 @@ class Transaction(object):
     @property
     def outbound_format(self):
         return self._outbound_format
+
+    @outbound_format.setter
+    def outbound_format(self, value):
+        value = process_data_format_value(value)
+        if value == self._outbound_format:
+            return
+
+        self._outbound_format = value
+        # TODO: Outbound Format changed event?
 
     @property
     def data(self):
@@ -60,16 +78,19 @@ class Transaction(object):
         self._resource_type = process_resource_type_value(resource_type)
         self._resource_id = process_uuid_value(resource_id)
         self._super_id = process_uuid_value(super_id)
-        self._inbound_format = process_data_format_value(inbound_format)
+        self._inbound_format = None
         self._inbound_payload = inbound_payload
         self.inbound_deserializer = None
-        self._outbound_format = process_data_format_value(outbound_format)
+        self._outbound_format = None
         self.outbound_payload = None
         self.outbound_serializer = None
 
         self.target_resource = None
         self._data = {}
         self._errors = []
+
+        self.outbound_format = outbound_format
+        self.inbound_format = inbound_format
 
     def _drop_handler(self, ref):
         self._handler = None

@@ -109,16 +109,25 @@ def test_controller_resource_export(controller, resource_data):
     assert sorted(export_data) == sorted(resource_data)
 
 
-def test_controller_transaction_post(controller):
-    resource_type = 'ContentInstance'
-    inbound_format = 'json'
-    inbound_payload = json.dumps(resource_data.DATA_CONTENT_INST)
+class _PostParams(object):
+    resource_data = [
+        (resource_data.DATA_CONTENT_INST, 'ContentInstance', 'json')
+    ]
 
-    transaction = backend.transactions.Post(resource_type, inbound_format,
+
+@pytest.mark.parametrize('resource_data', _PostParams.resource_data)
+def test_controller_transaction_post(controller, resource_data):
+    resource_data, resource_type, data_format = resource_data
+    inbound_payload = json.dumps(resource_data)
+
+    transaction = backend.transactions.Post(resource_type, data_format,
                                             inbound_payload)
     controller.process_transaction(transaction)
 
+    resource_id = uuid.UUID(resource_data['id'])
+
     assert len(transaction.errors) == 0
+    assert resource_id in controller._model._resources
 
 
 class _GetParams(object):
@@ -157,9 +166,55 @@ def test_controller_transaction_get(controller, outbound_format, resource_data):
         assert sorted(payload) == sorted(resource_data)
 
 
-def test_controller_transaction_put():
-    pass
+class _PutParams(object):
+    resource_data =[
+        (resource_data.DATA_CONTENT_TYPE_BASE, 'name'),
+        (resource_data.DATA_CONTENT_TYPE_SUB, 'name'),
+        (resource_data.DATA_ATTR_TYPE_NAME, 'name'),
+        (resource_data.DATA_ATTR_TYPE_PATH, 'name'),
+        (resource_data.DATA_ATTR_INST_NAME, 'value'),
+        (resource_data.DATA_ATTR_INST_PATH, 'value'),
+        # (resource_data.DATA_CONTENT_INST, 'name')  # 05/04/2016, excluded - nothing to change
+    ]
 
 
-def test_controller_transaction_delete():
-    pass
+@pytest.mark.parametrize('resource_data', _PutParams.resource_data)
+def test_controller_transaction_put(controller, resource_data):
+    resource_data, target_attr = resource_data
+    resource_data[target_attr] = '{0}_test'.format(resource_data[target_attr])
+    payload = json.dumps(resource_data)
+
+    transaction = backend.transactions.Put(resource_data['id'], 'json', payload)
+    transaction.outbound_format = 'json'
+    controller.process_transaction(transaction)
+
+    resource_id = uuid.UUID(resource_data['id'])
+    resource_data = json.dumps(resource_data)
+    payload = transaction.outbound_payload
+
+    assert len(transaction.errors) == 0
+    assert resource_id in controller._model._resources
+    assert sorted(payload) == sorted(resource_data)
+
+
+class _DeleteParams(object):
+    resource_ids = [
+        resource_data.DATA_CONTENT_TYPE_BASE['id'],
+        resource_data.DATA_CONTENT_TYPE_SUB['id'],
+        resource_data.DATA_ATTR_TYPE_NAME['id'],
+        resource_data.DATA_ATTR_TYPE_PATH['id'],
+        resource_data.DATA_ATTR_INST_NAME['id'],
+        resource_data.DATA_ATTR_INST_PATH['id'],
+        resource_data.DATA_CONTENT_INST['id']
+    ]
+
+
+@pytest.mark.parametrize('resource_id', _DeleteParams.resource_ids)
+def test_controller_transaction_delete(controller, resource_id):
+    transaction = backend.transactions.Delete(resource_id)
+    controller.process_transaction(transaction)
+
+    resource_id = uuid.UUID(resource_id)
+
+    assert len(transaction.errors) == 0
+    assert resource_id not in controller._model._resources
