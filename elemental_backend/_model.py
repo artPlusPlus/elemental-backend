@@ -21,7 +21,13 @@ _LOG = logging.getLogger(__name__)
 
 
 class Model(object):
+    """
+    A `Model` manages `Resource` instances and their relationships.
+    """
     def __init__(self):
+        """
+        Constructor for a `Model` instance.
+        """
         super(Model, self).__init__()
 
         self._resources = {}
@@ -54,8 +60,8 @@ class Model(object):
         When a Resource instance is registered, the Model will hold a single
         strong reference and multiple weak references to the Resource instance.
 
-        :param resource:
-        :return:
+        Args:
+            resource (Resource): A `Resource` instance to be managed by the `Model`.
         """
         msg = 'Registering resource: "{0}"'
         msg = msg.format(repr(type(resource)))
@@ -185,10 +191,13 @@ class Model(object):
 
     def retrieve_resource(self, resource_id):
         """
-        Retrieves a previously registered elemental Resource instance.
+        Retrieves a `Resource` instance managed by the `Model`.
 
-        :param resource_id:
-        :return:
+        Args:
+            resource_id (str or uuid): The ID of the `Resource` to retrieve.
+
+        Returns:
+            A `Resource` instance.
         """
         msg = 'Retrieving resource: "{0}"'.format(resource_id)
         _LOG.info(msg)
@@ -243,8 +252,11 @@ class Model(object):
         including its single strong reference. If no other strong references
         exist, the Resource instance will get garbage collected.
 
-        :param resource_id:
-        :return:
+        Args:
+            resource_id (str or uuid): The ID of the `Resource` to release.
+
+        Returns:
+            The released `Resource` instance.
         """
         msg = 'Releasing resource: "{0}"'.format(resource_id)
         _LOG.info(msg)
