@@ -320,15 +320,16 @@ class Controller(object):
         _LOG.info(msg)
 
         processes = {
-            Actions.GET: deque((
-                self._resolve_resource,
-                self._resolve_transaction_outbound_serializer
-            )),
             Actions.POST: deque((
                 self._resolve_transaction_inbound_deserializer,
+                self._resolve_transaction_outbound_serializer,
                 self._create_resource,
                 self._update_resource,
                 self._register_resource
+            )),
+            Actions.GET: deque((
+                self._resolve_resource,
+                self._resolve_transaction_outbound_serializer
             )),
             Actions.PUT: deque((
                 self._resolve_resource,
@@ -338,6 +339,7 @@ class Controller(object):
             )),
             Actions.DELETE: deque((
                 self._resolve_resource,
+                self._resolve_transaction_outbound_serializer,
                 self._delete_resource
             ))
         }
@@ -356,11 +358,6 @@ class Controller(object):
                 transaction=transaction)
             transaction.errors.append(e)
         else:
-            # processes = deque()
-            # processes.append(self._resolve_transaction_inbound_deserializer)
-            # processes.extend(action_processes)
-            # processes.append(self._resolve_transaction_outbound_serializer)
-
             try:
                 self._process_transaction(transaction, processes)
             except Exception as e:
@@ -707,14 +704,18 @@ class Controller(object):
                                   transaction)
 
     def _invoke_handlers(self, event, transaction):
-        keys = (
-            process_handler_key(event, transaction.action, transaction.resource_type),
-            process_handler_key(event, transaction.action, None),
-            process_handler_key(event, None, transaction.resource_type),
-            process_handler_key(event, None, None)
-        )
+        keys = [
+            (event, None, None),
+            (event, transaction.action, None),
+        ]
+        if transaction.resource_type:
+            keys.extend([
+                (event, None, transaction.resource_type),
+                (event, transaction.action, transaction.resource_type)
+            ])
 
         for key in keys:
+            key = process_handler_key(*key)
             try:
                 handlers = self._handlers[key]
             except KeyError:
@@ -722,11 +723,11 @@ class Controller(object):
 
             handlers = [h() if isinstance(h, weakref.ref) else h for h in handlers]
             handlers = [h for h in handlers if h]
-            self._handlers[key] = handlers
+            self._handlers[key] = [weakref.ref(h) for h in handlers]
 
             for handler in handlers:
                 try:
-                    handler(transaction)
+                    handler(event, transaction)
                 except ElementalError as e:
                     transaction.errors.append(e)
                 except Exception as e:

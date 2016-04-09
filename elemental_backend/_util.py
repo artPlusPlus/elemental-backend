@@ -12,8 +12,10 @@ def process_uuid_value(value):
     elif not isinstance(value, uuid.UUID):
         try:
             result = uuid.UUID(value)
-        except TypeError:
-            raise ValueError(value)
+        except (TypeError, ValueError):
+            msg = 'Invalid uuid value: "{0}"'
+            msg = msg.format(value)
+            raise ValueError(msg)
     else:
         result = value
 

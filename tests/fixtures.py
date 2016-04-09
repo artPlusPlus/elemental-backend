@@ -1,10 +1,16 @@
-import uuid
-
 import pytest
 
 import elemental_backend as backend
 
 from tests import resource_data
+
+
+@pytest.fixture(scope='module')
+def controller_json():
+    model = backend.Model()
+    controller = backend.Controller(model)
+    backend.serialization.json.bind_to_controller(controller)
+    return controller
 
 
 @pytest.fixture(scope='module')
