@@ -5,7 +5,6 @@ import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 import setup as _setup
 
@@ -56,7 +55,7 @@ napoleon_numpy_docstring = False
 
 # -- Options for HTML output ----------------------------------------------
 
-if on_rtd:
+if _setup.__on_rtd__:
     html_theme = 'sphinx_rtd_theme'
     # html_theme_options = {}
     # html_sidebars = {}

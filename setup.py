@@ -7,17 +7,12 @@ import sys
 from setuptools import setup, find_packages
 
 
-if sys.version_info <= (3, 5):
-    raise ValueError('This package requires Python 3.5 or above')
-
-
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
 with open(os.path.join(HERE, 'README.md'), 'r') as f:
     __long_description__ = f.read()
-
-
+__on_rtd__       = os.environ.get('READTHEDOCS', None) == 'True'
 __project__      = 'elemental-backend'
 __version__      = '0.2'
 __release__      = '0.2.0dev1'
@@ -56,6 +51,11 @@ __license__ = [
 
 
 def main():
+    if sys.version_info <= (3, 5) and not __on_rtd__:
+        msg = 'This package requires Python 3.5 or above (current {0}.{1})'
+        msg = msg.format(sys.version_info[0], sys.version_info[1])
+        raise ValueError(msg)
+
     setup(
         name                = __project__,
         version             = __version__,
