@@ -30,7 +30,10 @@ setup(
     ],
     keywords='elemental cms backend',
     packages=[
-        'elemental_backend'
+        'elemental_backend',
+        'elemental_backend.resources',
+        'elemental_backend.serialization',
+        'elemental_backend.transactions'
     ],
     install_requires=[],
     extras_require={
