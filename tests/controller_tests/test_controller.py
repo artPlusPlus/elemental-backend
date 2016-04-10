@@ -49,17 +49,19 @@ def test_controller_deserializer_registration(controller, deserializer_data):
 
 
 def test_controller_handler_registration(controller):
-    event = backend.ControllerEvents.initialized
+    event = backend.ControllerEvents.resource_created
     action = None
     resource_type = None
 
     @controller.handler(event, action=action, resource_type=resource_type)
-    def _handler(transaction):
+    def _handler(_):
         pass
 
     key = backend._util.process_handler_key(event, action, resource_type)
 
     assert controller._handlers[key][0]() is _handler
+
+    del _handler
 
 
 class _ImportParams(object):
