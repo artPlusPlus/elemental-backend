@@ -1,8 +1,8 @@
 language: python
 python:
   - "3.5"
-install:
-  - sudo apt-get update
+before_install:
+  - sudo apt-get update -qq
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -16,9 +16,9 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda install -q conda-build
-  # Useful for debugging any issues with conda
   - conda info -a
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
+install:
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pytest
   - source activate test-environment
   - conda build .
   - conda install --use-local elemental-backend
