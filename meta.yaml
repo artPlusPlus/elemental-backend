@@ -1,10 +1,10 @@
 package:
   name: elemental-backend
-  version: "0.2.0dev"
+  version: "0.2.0dev1"
 
 source:
   git_url: https://github.com/artplusplus/elemental-backend.git
-  git_rev: v0.2.0-dev
+  git_rev: v0.2.0-dev1
 
 build:
   number: 0
