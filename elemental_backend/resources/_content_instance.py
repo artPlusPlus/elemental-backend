@@ -3,8 +3,14 @@ from .._util import process_uuid_value, process_uuids_value
 
 
 class ContentInstance(Resource):
+    """
+    Represents a unique collection of `AttributeInstances`.
+    """
     @property
     def type_id(self):
+        """
+        uuid: An Id resolving to an `ContentType` Resource.
+        """
         return self._type_id
 
     @type_id.setter
@@ -24,6 +30,9 @@ class ContentInstance(Resource):
 
     @property
     def attribute_ids(self):
+        """
+        List[uuid]: A sequence of Ids resolving to valid `AttributeInstance` Resources.
+        """
         return self._attribute_ids
 
     @attribute_ids.setter
@@ -42,6 +51,15 @@ class ContentInstance(Resource):
         # TODO: ContentInstance.attribute_ids changed event
 
     def __init__(self, id=None, type_id=None, attribute_ids=None):
+        """
+        Initializes a new `ContentInstance` instance.
+
+        Args:
+            id (str or uuid): The unique id of this `ContentInstance` instance.
+            type_id (str or uuid): A valid id for an `ContentType` instance.
+            attribute_ids (List[str or uuid]): A sequence of valid
+                `AttributeInstances` Ids.
+        """
         super(ContentInstance, self).__init__(id=id)
 
         self._type_id = None

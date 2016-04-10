@@ -45,7 +45,7 @@ class _InstantiationParams(object):
 @pytest.mark.parametrize('name', _InstantiationParams.name)
 @pytest.mark.parametrize('base_ids', _InstantiationParams.base_ids)
 @pytest.mark.parametrize('attribute_type_ids', _InstantiationParams.attribute_type_ids)
-def test_content_instance_instantiation(id, name, base_ids, attribute_type_ids):
+def test_content_type_instantiation(id, name, base_ids, attribute_type_ids):
     id_value, id_expected = id
     name_value, name_expected = name
     base_ids_value, base_ids_expected = base_ids

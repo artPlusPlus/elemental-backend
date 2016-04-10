@@ -3,8 +3,16 @@ from .._util import NO_VALUE
 
 
 class AttributeType(Resource):
+    """
+    Represents a definition for `AttributeInstances`.
+
+    `AttributeTypes` are referenced by `ContentTypes`.
+    """
     @property
     def name(self):
+        """
+        str: Label identifying the intention of the `AttributeType's` data.
+        """
         return self._name
 
     @name.setter
@@ -22,6 +30,9 @@ class AttributeType(Resource):
 
     @property
     def default_value(self):
+        """
+        When a referring `AttributeInstance` is unset, this value is used.
+        """
         return self._default_value
 
     @default_value.setter
@@ -34,6 +45,9 @@ class AttributeType(Resource):
 
     @property
     def kind_id(self):
+        """
+        str: The Kind backing this `AttributeType`.
+        """
         return self._kind_id
 
     @kind_id.setter
@@ -46,6 +60,9 @@ class AttributeType(Resource):
 
     @property
     def kind_properties(self):
+        """
+        Dict[str:str]: Data used by the `AttributeType's` Kind.
+        """
         return self._kind_properties
 
     @kind_properties.setter
@@ -68,6 +85,18 @@ class AttributeType(Resource):
 
     def __init__(self, id=None, name=None, default_value=NO_VALUE,
                  kind_id=None, kind_properties=None):
+        """
+        Initializes a new `AttributeType` instance.
+
+        Args:
+            id (str or uuid): The unique id of this `AttributeType` instance.
+            name (str): A human-friendly label identifying the purpose of the
+                data represented by referring `AttributeInstances`.
+            default_value: Data used when referring `AttributeInstances` have
+                no value set.
+            kind_id (str): Identifier resolving to a valid `AttributeKind`.
+            kind_properties (Dict[str:str]): Data used by the `AttributeKind`.
+        """
         super(AttributeType, self).__init__(id=id)
 
         self._name = None
