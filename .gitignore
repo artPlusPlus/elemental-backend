@@ -78,3 +78,9 @@ logs/
 envs/
 scratch/
 tests/.cache/
+
+
+# =========================
+# Doc Files
+# =========================
+docs/build/
