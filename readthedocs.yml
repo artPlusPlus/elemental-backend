@@ -3,10 +3,10 @@ formats:
 
 requirements_file: none
 
-#conda:
-#  file: environment.yml
+conda:
+  file: environment_35x64.rtd.yml
 
 python:
-  version: 3
-  setup_py_install: false
-  pip_install: true
+  version: 3.5
+  setup_py_install: true
+  pip_install: false
