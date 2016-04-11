@@ -4,6 +4,7 @@
 import sys
 import os
 
+# This is necessary for ReadTheDocs to find the setup module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.insert(1, os.path.abspath(os.path.join(sys.path[0], '..')))
 
