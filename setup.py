@@ -29,6 +29,10 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
     keywords='elemental cms backend',
+    test_suite='tests',
+    tests_require=[
+        'pytest'
+    ],
     packages=[
         'elemental_backend',
         'elemental_backend.resources',
@@ -37,7 +41,6 @@ setup(
     ],
     install_requires=[],
     extras_require={
-        'tests': ['py.test'],
         'docs': ['sphinx>=1.3.0']
     }
 )
