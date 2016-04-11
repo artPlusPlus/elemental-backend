@@ -4,7 +4,8 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(1, os.path.abspath(os.path.join(sys.path[0], '..')))
 
 import setup as _setup
 
