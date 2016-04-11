@@ -3,8 +3,8 @@ formats:
 
 requirements_file: none
 
-conda:
-  file: environment_35x64.rtd.yml
+#conda:
+#  file: environment_35x64.rtd.yml
 
 python:
   version: 3.5
