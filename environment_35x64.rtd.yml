@@ -1,0 +1,4 @@
+name: elemental-backend_35x64_rtd
+
+dependencies:
+  - python=3.5

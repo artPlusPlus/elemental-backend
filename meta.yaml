@@ -5,7 +5,7 @@ package:
 source:
   git_url: https://github.com/artplusplus/elemental-backend.git
 #  git_rev: v0.2.0-dev1
-  git_tag: travis_ci_conda_support
+  git_tag: sphinx_docs_support
 
 build:
   number: 0
