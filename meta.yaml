@@ -3,9 +3,7 @@ package:
   version: "0.2.0dev1"
 
 source:
-  git_url: https://github.com/artplusplus/elemental-backend.git
-#  git_rev: v0.2.0-dev1
-  git_tag: sphinx_docs_support
+  path: .
 
 build:
   number: 0
