@@ -1,6 +1,10 @@
 elemental-backend
 =================
 
+[![Build Status](https://travis-ci.org/artPlusPlus/elemental-backend.svg?branch=master)](https://travis-ci.org/artPlusPlus/elemental-backend)
+[![Documentation Status](https://readthedocs.org/projects/elemental-backend/badge/?version=latest)](http://elemental-backend.readthedocs.org/en/latest/?badge=latest)
+[![Codacy Badge](https://api.codacy.com/project/badge/grade/07cf3fabc7444bca9429668a38e122c5)](https://www.codacy.com/app/artPlusPlus/elemental-backend)
+
 elemental-backend provides the core data management capabilities for the
 Elemental CMS.
 
