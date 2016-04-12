@@ -1,4 +1,8 @@
 package: elemental-backend
+platform:
+  - linux-64
+engine:
+  - python=3.5
 script:
   - conda build .
 build_targets:
