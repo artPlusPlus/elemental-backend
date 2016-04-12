@@ -1,0 +1,5 @@
+package: elemental-backend
+script:
+  - conda build .
+build_targets:
+  - conda
