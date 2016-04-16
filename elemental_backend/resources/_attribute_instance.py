@@ -1,5 +1,7 @@
+from elemental_core import NO_VALUE
+from elemental_core.util import process_uuid_value
+
 from ._resource import Resource
-from .._util import NO_VALUE, process_uuid_value
 
 
 class AttributeInstance(Resource):
@@ -40,6 +42,9 @@ class AttributeInstance(Resource):
 
     @value.setter
     def value(self, value):
+        # TODO: Process value using AttributeKind
+        # TODO: Validate value using AttributeKind
+
         if value == self._value:
             return
 
@@ -71,6 +76,22 @@ class AttributeInstance(Resource):
         self._source_id = value
         # TODO: AttributeInstance.source_id changed event
 
+    @property
+    def attribute_type(self):
+        result = self._attribute_type or None
+        if result and isinstance(result, weakref.ref):
+            result = result()
+        if result and not isinstance(result, Resource) and callable(result):
+            result = result()
+        return result
+
+    @attribute_type.setter
+    def attribute_type(self, value):
+        try:
+            self._attribute_type = weakref.ref(value)
+        except TypeError:
+            self._attribute_type = value
+
     def __init__(self, id=None, type_id=None, value=NO_VALUE, source_id=None):
         """
         Initializes a new `AttributeInstance` instance.
@@ -91,3 +112,5 @@ class AttributeInstance(Resource):
         self.type_id = type_id
         self.value = value
         self.source_id = source_id
+
+        self._attribute_type = None

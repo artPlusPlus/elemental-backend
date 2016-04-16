@@ -1,5 +1,6 @@
+from elemental_core import NO_VALUE
+
 from ._resource import Resource
-from .._util import NO_VALUE
 
 
 class AttributeType(Resource):

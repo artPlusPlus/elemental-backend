@@ -1,6 +1,8 @@
 import uuid
 import json
 
+from elemental_core.util import process_elemental_class_value
+
 import elemental_backend as backend
 from elemental_backend.serialization import json as json_serialization
 
@@ -82,7 +84,7 @@ def test_controller_resource_import(controller, resource_data):
     resource = controller.import_resource(
         resource_type, json.dumps(resource_data), data_format)
 
-    resource_type = backend._util.process_resource_type_value(resource_type)
+    resource_type = process_elemental_class_value(resource_type)
 
     assert isinstance(resource, resource_type)
     assert resource.id == uuid.UUID(resource_data['id'])

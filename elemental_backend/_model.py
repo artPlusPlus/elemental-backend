@@ -1,6 +1,8 @@
 import logging
 import weakref
 
+from elemental_core.util import process_uuid_value
+
 from .errors import (
     ResourceNotFoundError,
     ResourceNotRegisteredError,
@@ -14,7 +16,6 @@ from .resources import (
     AttributeInstance,
     ContentInstance
 )
-from ._util import process_uuid_value
 
 
 _LOG = logging.getLogger(__name__)

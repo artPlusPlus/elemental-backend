@@ -1,5 +1,6 @@
+from elemental_core.util import process_uuids_value
+
 from ._resource import Resource
-from .._util import process_uuids_value
 
 
 class ContentType(Resource):

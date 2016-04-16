@@ -1,7 +1,8 @@
-from .._util import process_uuid_value
+from elemental_core import ElementalBase
+from elemental_core.util import process_uuid_value
 
 
-class Resource(object):
+class Resource(ElementalBase):
     """
     Base class for content data.
     """
