@@ -1,6 +1,6 @@
 package:
   name: elemental-backend
-  version: "0.2.0dev1"
+  version: "0.2.1dev0"
 
 source:
   path: ../
