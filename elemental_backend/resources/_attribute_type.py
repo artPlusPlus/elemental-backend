@@ -1,4 +1,6 @@
 from elemental_core import NO_VALUE
+from elemental_core.util import process_elemental_class_value
+import elemental_kinds  # Not directly used, allows classes to be resolved later
 
 from ._resource import Resource
 
@@ -83,6 +85,13 @@ class AttributeType(Resource):
 
         self._kind_properties = value
         # TODO: AttributeType.kind_properties changed event
+
+    @property
+    def kind(self):
+        if not self.kind_id:
+            return None
+
+        return process_elemental_class_value(self.kind_id)
 
     def __init__(self, id=None, name=None, default_value=NO_VALUE,
                  kind_id=None, kind_properties=None):

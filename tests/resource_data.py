@@ -5,7 +5,7 @@ DATA_ATTR_TYPE_NAME = {
     'id': str(uuid.uuid4()),
     'name': 'name',
     'default_value': None,
-    'kind_id': 'string',
+    'kind_id': 'StringKind',
     'kind_properties': {}
 }
 
@@ -24,7 +24,7 @@ DATA_ATTR_TYPE_PATH = {
     'id': str(uuid.uuid4()),
     'name': 'depot_path',
     'default_value': None,
-    'kind_id': 'string',
+    'kind_id': 'StringKind',
     'kind_properties': {}
 }
 

@@ -1,7 +1,12 @@
+import logging
+
 from elemental_core.util import (
     process_elemental_class_value,
     process_data_format_value
 )
+
+
+_LOG = logging.getLogger(__name__)
 
 
 def process_serializer_key(resource_type, data_format):
@@ -62,3 +67,61 @@ def process_handler_key(event, action, resource_type):
         return event, action, resource_type
 
     return None
+
+
+def _resolve_attr_type(attr_inst_proxy, model_resources_proxy):
+    """
+    Used internally to allow AttributeInstances to resolve their AttributeType.
+
+    Args:
+        attr_inst_proxy (weakref.proxy): proxy to an AttributeInstance
+            instance.
+        model_resources_proxy (weakref.proxy): proxy to the _resources map of
+            a Model instance.
+
+    Returns:
+        `AttributeType` instance if proxies are alive and an `AttributeType`
+        instance with an id matching the value of the AttributeInstance
+        instance's `type_id` has been registered within the same `Model`
+        instance.
+    """
+    result = None
+
+    if not attr_inst_proxy:
+        msg = (
+            'Failed to resolve AttributeType: '
+            'AttributeInstance reference is dead.'
+        )
+        _LOG.warn(msg)
+    elif not model_resources_proxy:
+        msg = (
+            'Failed to resolve AttributeType: '
+            'Model._resources reference is dead.'
+        )
+        _LOG.warn(msg)
+    else:
+        type_id = attr_inst_proxy.type_id
+        result = model_resources_proxy.get(type_id)
+
+        if result:
+            msg = 'Resolved AttributeType: "{0}"'
+            msg = msg.format(result)
+        else:
+            msg = 'Failed to resolve AttributeType "{0}"'
+            msg = msg.format(type_id)
+        _LOG.debug(msg)
+
+    return result
+
+
+class _Dict(dict):
+    """
+    Weak referenceable dict: https://docs.python.org/3/library/weakref.html
+
+    Used by a `Model` to allow for resolving of an `AttributeInstance`'s
+    `AttributeType`.
+
+    See Also:
+        Model._register_attribute_instance
+    """
+    pass

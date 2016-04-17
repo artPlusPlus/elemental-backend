@@ -1,6 +1,6 @@
 package:
   name: elemental-backend
-  version: "0.2.1dev0"
+  version: "0.3.0dev0"
 
 source:
   path: ../
@@ -12,8 +12,12 @@ requirements:
   build:
     - python
     - setuptools
+    - elemental-core
+    - elemental-kinds
   run:
     - python
+    - elemental-core
+    - elemental-kinds
 
 test:
   requires:

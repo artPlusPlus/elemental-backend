@@ -1,5 +1,6 @@
 import logging
 import weakref
+from functools import partial
 
 from elemental_core.util import process_uuid_value
 
@@ -16,6 +17,10 @@ from .resources import (
     AttributeInstance,
     ContentInstance
 )
+from ._util import (
+    _resolve_attr_type,
+    _Dict
+)
 
 
 _LOG = logging.getLogger(__name__)
@@ -31,7 +36,7 @@ class Model(object):
         """
         super(Model, self).__init__()
 
-        self._resources = {}
+        self._resources = _Dict()  # not dict() to allow for weak reffing
         self._map__resource_type__resources = {}
         self._map__content_type__content_instances = weakref.WeakKeyDictionary()
         self._map__content_instance__attribute_instances = weakref.WeakKeyDictionary()
@@ -519,6 +524,21 @@ class Model(object):
             raise ResourceNotRegisteredError(
                 msg, resource_type=type(attribute_instance),
                 resource_id=attribute_instance.id)
+
+        # The intention here is to set the value of the `attribute_instance`'s
+        # `attribute_type` property to a callback. This callback will retrieve
+        # the AttributeType resource using the value of
+        # `attribute_instance.type_id` at the time of callback invocation.
+        #
+        # This is done so the order in which the `AttributeType` and
+        # `AttributeInstance` come into existence will not matter. The
+        # `AttributeType` only has to exist when the `attribute_type` property
+        # is hit.
+        attribute_instance.attribute_type = partial(
+            _resolve_attr_type,
+            weakref.proxy(attribute_instance),
+            weakref.proxy(self._resources)
+        )
 
         map_type_instances = self._map__attribute_type__attribute_instances
         try:
