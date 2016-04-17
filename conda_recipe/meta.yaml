@@ -1,12 +1,9 @@
 package:
   name: elemental-backend
-  version: "0.3.0dev0"
+  version: "0.3.0dev1"
 
 source:
   path: ../
-
-build:
-  number: 0
 
 requirements:
   build:

@@ -1,12 +1,11 @@
 package: elemental-backend
 platform:
   - linux-64
+  - win-64
+  - osx-64
 engine:
   - python=3.5
-install_channels:
-  - defaults
-  - artplusplus
 script:
-  - conda build ./conda_recipe
+  - conda build --channel artplusplus ./conda_recipe
 build_targets:
   - conda
