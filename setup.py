@@ -19,7 +19,7 @@ __project__ = 'elemental-backend'
 
 __version__ = '0.3'
 
-__release__ = '0.3.1dev1'
+__release__ = '0.3.1dev0'
 
 __classifiers__ = [
     'Development Status :: 1 - Planning',
