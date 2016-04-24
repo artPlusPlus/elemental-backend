@@ -6,6 +6,6 @@ platform:
 engine:
   - python=3.5
 script:
-  - conda build --channel artplusplus ./conda_recipe
+  - conda build --channel artplusplus ./.conda.recipe
 build_targets:
   - conda
