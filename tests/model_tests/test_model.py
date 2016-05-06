@@ -29,6 +29,9 @@ def test_model_unordered_register_and_release(
             resource = _all_resources[resource_idx]
             model.register_resource(resource)
 
+        assert attribute_inst_name.attribute_type is attribute_type_name
+        assert attribute_inst_path.attribute_type is attribute_type_path
+
         for resource_idx in range(0, len(_all_resources)):
             resource_idx += resource_idx_offset % len(_all_resources)
             resource_idx %= len(_all_resources)

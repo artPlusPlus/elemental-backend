@@ -20,7 +20,7 @@ before_install:
 install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pytest
   - source activate test-environment
-  - conda build .
+  - conda build --channel artplusplus ./.conda.recipe
   - conda install --use-local elemental-backend
 script:
   - py.test

@@ -18,6 +18,7 @@ def serialize_content_type(content_type):
 
     """
     data = {
+        'type': type(content_type).__name__,
         'id': str(content_type.id),
         'name': str(content_type.name),
         'base_ids': [str(bid) for bid in content_type.base_ids],
@@ -69,6 +70,7 @@ def serialize_attribute_type(attribute_type):
 
     """
     data = {
+        'type': type(attribute_type).__name__,
         'id': str(attribute_type.id),
         'name': str(attribute_type.name),
         'default_value': attribute_type.default_value,
@@ -122,6 +124,7 @@ def serialize_content_instance(content_instance):
 
     """
     data = {
+        'type': type(content_instance).__name__,
         'id': str(content_instance.id),
         'type_id': str(content_instance.type_id),
         'attribute_ids': [str(aid) for aid in
@@ -175,6 +178,7 @@ def serialize_attribute_instance(attribute_instance):
         source_id = attribute_instance.source_id
 
     data = {
+        'type': type(attribute_instance).__name__,
         'id': str(attribute_instance.id),
         'type_id': str(attribute_instance.type_id),
         'value': attribute_instance.value,

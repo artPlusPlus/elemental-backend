@@ -2,10 +2,14 @@ import logging
 import weakref
 from collections import deque
 
+from elemental_core import ElementalError
+from elemental_core.util import (
+    process_elemental_class_value
+)
+
 from .transactions import Actions
 from ._controller_events import ControllerEvents
 from .errors import (
-    ElementalError,
     InvalidSerializerKeyError,
     SerializerNotFoundError,
     InvalidDeserializerKeyError,
@@ -20,7 +24,6 @@ from .errors import (
     ResourceNotDeletedError
 )
 from ._util import (
-    process_resource_type_value,
     process_serializer_key,
     process_deserializer_key,
     process_handler_key
@@ -232,7 +235,7 @@ class Controller(object):
             raise DeserializerNotFoundError(msg, resource_type=resource_type,
                                             data_format=data_format)
 
-        resource_type = process_resource_type_value(resource_type)
+        resource_type = process_elemental_class_value(resource_type)
         resource = resource_type()
         deserializer(resource_data, resource)
         self._model.register_resource(resource)

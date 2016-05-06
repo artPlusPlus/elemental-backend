@@ -1,13 +1,14 @@
 import uuid
 
-from .._util import (
+from elemental_core import ElementalBase
+from elemental_core.util import (
     process_uuid_value,
-    process_resource_type_value,
+    process_elemental_class_value,
     process_data_format_value
 )
 
 
-class Transaction(object):
+class Transaction(ElementalBase):
     """
     A Transaction represents an atomic operation on a single `Resource`.
 
@@ -130,7 +131,7 @@ class Transaction(object):
         """
         self._id = uuid.uuid4()
         self._action = action
-        self._resource_type = process_resource_type_value(resource_type)
+        self._resource_type = process_elemental_class_value(resource_type)
         self._resource_id = process_uuid_value(resource_id)
         self._super_id = process_uuid_value(super_id)
         self._inbound_format = None
