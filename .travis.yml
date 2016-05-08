@@ -14,13 +14,14 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
+  - conda config --add channels artplusplus
   - conda update -q conda
   - conda install -q conda-build
   - conda info -a
 install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pytest
   - source activate test-environment
-  - conda build --channel artplusplus ./.conda.recipe
+  - conda build ./.conda.recipe
   - conda install --use-local elemental-backend
 script:
   - py.test
