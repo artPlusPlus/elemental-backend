@@ -31,7 +31,7 @@ def test_model_register_content_type(model, id):
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_type__resources[backend.resources.ContentType]
+    type_resources = model._map__resource_class__resources[backend.resources.ContentType]
     assert resource.id in all_resources
     assert all_resources[resource.id] is resource
     assert resource.id in type_resources
@@ -79,6 +79,6 @@ def test_model_release_content_type(model, id):
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_type__resources[backend.resources.ContentType]
+    type_resources = model._map__resource_class__resources[backend.resources.ContentType]
     assert resource.id not in all_resources
     assert resource.id not in type_resources

@@ -1,12 +1,14 @@
 from elemental_core import ElementalBase
 from elemental_core.util import process_uuid_value
 
+from ._resource_property import ResourceProperty
+
 
 class Resource(ElementalBase):
     """
     Base class for content data.
     """
-    @property
+    @ResourceProperty
     def id(self):
         """
         Uniquely identifies a `Resource`.
@@ -22,11 +24,7 @@ class Resource(ElementalBase):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        if value == self._id:
-            return
-
         self._id = value
-        # TODO: Resource.id changed event
 
     def __init__(self, id=None):
         """

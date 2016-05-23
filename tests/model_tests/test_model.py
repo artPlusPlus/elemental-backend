@@ -40,11 +40,8 @@ def test_model_unordered_register_and_release(
             model.release_resource(resource.id)
 
     assert len(model._resources) == 0
-    for rt in model._map__resource_type__resources:
-        assert len(model._map__resource_type__resources[rt]) == 0
-    assert len(model._map__content_type__content_instances) == 0
-    assert len(model._map__content_instance__attribute_instances) == 0
+    for rc in model._map__resource_class__resources:
+        assert len(model._map__resource_class__resources[rc]) == 0
     assert len(model._map__target_attr__source_attr) == 0
     assert len(model._map__attribute_type__content_type) == 0
-    assert len(model._map__attribute_type__attribute_instances) == 0
     assert len(model._map__attribute_instance__content_instance) == 0

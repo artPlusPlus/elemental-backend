@@ -5,42 +5,21 @@ from functools import partial
 from elemental_core import NO_VALUE
 from elemental_core.util import process_uuid_value
 
-from ._resource import Resource
+from ._resource_instance import ResourceInstance
+from ._resource_property import ResourceProperty
 
 
 _LOG = logging.getLogger(__name__)
 
 
-class AttributeInstance(Resource):
+class AttributeInstance(ResourceInstance):
     """
     Represents an instance of an `AttributeType`.
 
     An AttributeInstance holds value data for an AttributeType relative to
     a ContentInstance.
     """
-    @property
-    def type_id(self):
-        """
-        uuid: An Id resolving to an `AttributeType` Resource.
-        """
-        return self._type_id
-
-    @type_id.setter
-    def type_id(self, value):
-        try:
-            value = process_uuid_value(value)
-        except ValueError:
-            msg = 'Failed to set type id: "{0}" is not a valid UUID.'
-            msg = msg.format(value)
-            raise ValueError(msg)
-
-        if value == self._type_id:
-            return
-
-        self._type_id = value
-        # TODO: AttributeInstance.type_id changed event
-
-    @property
+    @ResourceProperty
     def value(self):
         """
         Data managed by the `AttributeInstance` instance.
@@ -89,13 +68,9 @@ class AttributeInstance(Resource):
             msg = msg.format(self.id, self.type_id)
             _LOG.debug(msg)
 
-        if value == self._value:
-            return
-
         self._value = value
-        # TODO: AttributeInstance.value changed event
 
-    @property
+    @ResourceProperty
     def source_id(self):
         """
         uuid: An Id resolving to an `AttributeInstance` Resource.
@@ -114,11 +89,7 @@ class AttributeInstance(Resource):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        if value == self._source_id:
-            return
-
         self._source_id = value
-        # TODO: AttributeInstance.source_id changed event
 
     @property
     def attribute_type(self):
@@ -135,9 +106,7 @@ class AttributeInstance(Resource):
             `AttributeInstance.value`
         """
         result = self._attribute_type or None
-        if result and isinstance(result, weakref.ref):
-            result = result()
-        if result and not isinstance(result, Resource) and callable(result):
+        if isinstance(result, (weakref.ref, partial)):
             result = result()
         return result
 
@@ -149,8 +118,7 @@ class AttributeInstance(Resource):
             except TypeError:
                 value = value
 
-        if value != self._attribute_type:
-            self._attribute_type = value
+        self._attribute_type = value
 
     def __init__(self, id=None, type_id=None, value=NO_VALUE, source_id=None):
         """
@@ -163,13 +131,11 @@ class AttributeInstance(Resource):
             source_id (str or uuid): A valid id for an `AttributeInstance`
                 instance from which this instance's value should be pulled.
         """
-        super(AttributeInstance, self).__init__(id=id)
+        super(AttributeInstance, self).__init__(id=id, type_id=type_id)
 
-        self._type_id = None
         self._value = None
         self._source_id = None
         self._attribute_type = None
 
-        self.type_id = type_id
         self.value = value
         self.source_id = source_id

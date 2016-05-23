@@ -44,12 +44,12 @@ def test_model_register_attribute_instance(model, id, type_id):
     assert resource.id in all_resources
     assert all_resources[resource.id] is resource
 
-    type_resources = model._map__resource_type__resources[backend.resources.AttributeInstance]
+    type_resources = model._map__resource_class__resources[backend.resources.AttributeInstance]
     assert resource.id in type_resources
     assert type_resources[resource.id] is resource
 
-    # Entries should not be created in _map__attribute_instance__content_instance
-    # except by a ContentInstance.
+    # Entries should not be created in _map__attribute_instance__content_
+    # instance except by a ContentInstance.
     map_ai_ci = model._map__attribute_instance__content_instance
     assert resource.id not in map_ai_ci
 
@@ -97,7 +97,7 @@ def test_model_release_attribute_instance(model, id):
     all_resources = model._resources
     assert resource.id not in all_resources
 
-    type_resources = model._map__resource_type__resources[backend.resources.AttributeInstance]
+    type_resources = model._map__resource_class__resources[backend.resources.AttributeInstance]
     assert resource.id not in type_resources
 
     map_ai_ci = model._map__attribute_instance__content_instance
