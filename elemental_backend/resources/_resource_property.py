@@ -1,4 +1,5 @@
 import weakref
+from functools import partial
 
 
 class ResourceProperty(object):
@@ -42,12 +43,16 @@ class ResourceProperty(object):
         try:
             subscribers = self._subscribers[instance]
         except KeyError:
-            subscribers = set()
+            subscribers = set()  # set instead of WeakSet to support WeakMethod
             self._subscribers[instance] = subscribers
+
+        callback_died_handler = partial(self._callback_died,
+                                        weakref.ref(instance))
         try:
-            callback = weakref.WeakMethod(callback)
+            callback = weakref.WeakMethod(callback, callback_died_handler)
         except TypeError:
-            callback = weakref.ref(callback)
+            callback = weakref.ref(callback, callback_died_handler)
+
         subscribers.add(callback)
 
     def unsubscribe(self, instance, callback):
@@ -62,6 +67,8 @@ class ResourceProperty(object):
             callback = weakref.ref(callback)
 
         subscribers.remove(callback)
+        if not len(subscribers):
+            del self._subscribers[instance]
 
     def _on_changed(self, instance, original_value, current_value):
         try:
@@ -83,3 +90,10 @@ class ResourceProperty(object):
         instance, callback = instance_callback
         self.unsubscribe(instance, callback)
         return self
+
+    def _callback_died(self, instance_ref, callback_ref):
+        instance = instance_ref()
+        try:
+            self._subscribers[instance].discard(callback_ref)
+        except KeyError:
+            pass
