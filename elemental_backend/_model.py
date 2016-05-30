@@ -468,25 +468,8 @@ class Model(object):
         type(resource).id -= handler
 
     def _register_resource_type(self, resource_type):
-        # When registering a ResourceType, the UUID instance owned by
-        # resource_type should be used as the key. However, it is possible
-        # for a ResourceInstance to be registered prior to the ResourceType
-        # instance.
         map_type_instances = self._map__resource_type__resource_instances
-
-        try:
-            instance_ids = map_type_instances[resource_type.id]
-        except KeyError:
-            instance_ids = weakref.WeakSet()
-
-        # Here, the uuid object used as a key is explicitly set to be the
-        # `ResourceType`'s `id` object.
-        try:
-            del map_type_instances[resource_type.id]
-        except KeyError:
-            pass
-        finally:
-            map_type_instances[resource_type.id] = instance_ids
+        self._fix_map_key(map_type_instances, resource_type.id, weakref.WeakSet)
 
         handler = (resource_type, self._handle_resource_type_name_changed)
         type(resource_type).name += handler
@@ -544,6 +527,9 @@ class Model(object):
         for attribute_type_id in content_type.attribute_type_ids:
             map_at_ct[attribute_type_id] = content_type.id
 
+        map_ct_vts = self._map__content_type__view_types
+        self._fix_map_key(map_ct_vts, content_type.id, weakref.WeakSet)
+
         handler = (content_type,
                    self._handle_content_type_base_ids_changed)
         type(content_type).base_ids += handler
@@ -556,6 +542,12 @@ class Model(object):
         map_at_ct = self._map__attribute_type__content_type
         for attribute_type_id in content_type.attribute_type_ids:
             del map_at_ct[attribute_type_id]
+
+        map_ct_vts = self._map__content_type__view_types
+        try:
+            del map_ct_vts[content_type.id]
+        except KeyError:
+            pass
 
         handler = (content_type,
                    self._handle_content_type_base_ids_changed)
@@ -600,22 +592,10 @@ class Model(object):
 
     def _register_attribute_type(self, attribute_type):
         map_at_ct = self._map__attribute_type__content_type
-        try:
-            content_type_id = map_at_ct[attribute_type.id]
-        except KeyError:
-            pass
-        else:
-            del map_at_ct[attribute_type.id]
-            map_at_ct[attribute_type.id] = content_type_id
+        self._fix_map_key(map_at_ct, attribute_type.id)
 
         map_at_fts = self._map__attribute_type__filter_types
-        try:
-            filter_type_ids = map_at_fts[attribute_type.id]
-        except KeyError:
-            pass
-        else:
-            del map_at_fts[attribute_type.id]
-            map_at_fts[attribute_type.id] = filter_type_ids
+        self._fix_map_key(map_at_fts, attribute_type.id)
 
         handler = (attribute_type,
                    self._handle_attribute_type_default_value_changed)
@@ -676,13 +656,7 @@ class Model(object):
         )
 
         map_ai_ci = self._map__attribute_instance__content_instance
-        try:
-            content_instance_id = map_ai_ci[attribute_instance.id]
-        except KeyError:
-            pass
-        else:
-            del map_ai_ci[attribute_instance.id]
-            map_ai_ci[attribute_instance.id] = content_instance_id
+        self._fix_map_key(map_ai_ci, attribute_instance.id)
 
         handler = (attribute_instance,
                    self._handle_attribute_instance_value_changed)
@@ -712,13 +686,15 @@ class Model(object):
         if view_type.id not in map_vt_cis:
             map_vt_cis[view_type.id] = weakref.WeakSet()
 
-        map_ct_vt = self._map__content_type__view_types
+        map_ct_vts = self._map__content_type__view_types
         for content_type_id in view_type.content_type_ids:
             try:
-                view_types = map_ct_vt[content_type_id]
+                view_type_ids = map_ct_vts[content_type_id]
             except KeyError:
-                view_types = weakref.WeakSet()
-            view_types.add(view_type.id)
+                view_type_ids = weakref.WeakSet()
+                map_ct_vts[content_type_id] = view_type_ids
+            view_type_ids.add(view_type.id)
+
 
         self._update_view_type_content_instances(
             view_type, view_type.content_type_ids, set())
@@ -760,13 +736,7 @@ class Model(object):
             map_fi_vi[filter_instance_id] = view_instance.id
 
         map_vi_cis = self._map__view_instance__content_instances
-        try:
-            content_instance_ids = map_vi_cis[view_instance.id]
-        except KeyError:
-            content_instance_ids = weakref.WeakSet()
-        else:
-            del map_vi_cis[view_instance.id]
-        map_vi_cis[view_instance.id] = content_instance_ids
+        self._fix_map_key(map_vi_cis, view_instance.id, weakref.WeakSet)
 
         handler = (view_instance,
                    self._handle_view_instance_filter_ids_changed)
@@ -815,6 +785,12 @@ class Model(object):
         type(filter_instance).kind_params += handler
 
     def _deregister_filter_instance(self, filter_instance):
+        map_fi_vi = self._map__filter_instance__view_instance
+        try:
+            del map_fi_vi[filter_instance.id]
+        except KeyError:
+            pass
+
         handler = (filter_instance,
                    self._handler_filter_instance_kind_params_changed)
         type(filter_instance).kind_params -= handler
@@ -967,7 +943,10 @@ class Model(object):
             content_inst_ids.difference_update(map_rt_ri[type_id])
 
         for type_id in add_content_type_ids:
-            content_inst_ids.update(map_rt_ri[type_id])
+            try:
+                content_inst_ids.update(map_rt_ri[type_id])
+            except KeyError:
+                pass
 
     def _update_view_instance_content_instances(
             self, view_instance_id, content_instance_ids=None, filter_data=None):
@@ -1040,3 +1019,27 @@ class Model(object):
             result = None
 
         return result
+
+    @staticmethod
+    def _fix_map_key(map, key, items_container_type=None):
+        """
+        Helper function for ensuring a specific object instance is used
+        as the key for a map entry.
+
+        Model is intended to support unordered registration of `Resources`.
+        There are cases where a dependent `Resource` will create an entry
+        in a map because the dependency has not yet been registered. This
+        function allows the dependency to insert its own object as the key.
+        This is especially important when using a WeakKeyDictionary as the map.
+        """
+        try:
+            value = map[key]
+        except KeyError:
+            if items_container_type:
+                value = items_container_type()
+            else:
+                return
+        else:
+            del map[key]
+
+        map[key] = value

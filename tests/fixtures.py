@@ -101,7 +101,41 @@ def content_inst_sub():
 
 
 @pytest.fixture(scope='module')
+def filter_type():
+    resource = backend.resources.FilterType(
+        id=resource_data.DATA_FILTER_TYPE['id'],
+        name=resource_data.DATA_FILTER_TYPE['name'],
+        attribute_type_ids=resource_data.DATA_FILTER_TYPE['attribute_type_ids']
+    )
+    return resource
+
+
+@pytest.fixture(scope='module')
+def filter_instance():
+    resource = backend.resources.FilterInstance(
+        id=resource_data.DATA_FILTER_INSTANCE['id'],
+        type_id=resource_data.DATA_FILTER_INSTANCE['type_id'],
+        kind_params=resource_data.DATA_FILTER_INSTANCE['kind_params']
+    )
+    return resource
+
+
+@pytest.fixture(scope='module')
 def view_type():
     resource = backend.resources.ViewType(
-        id=resource_data.D
+        id=resource_data.DATA_VIEW_TYPE['id'],
+        name=resource_data.DATA_VIEW_TYPE['name'],
+        content_type_ids=resource_data.DATA_VIEW_TYPE['content_type_ids'],
+        filter_type_ids=resource_data.DATA_VIEW_TYPE['filter_type_ids']
     )
+    return resource
+
+
+@pytest.fixture(scope='module')
+def view_instance():
+    resource = backend.resources.ViewInstance(
+        id=resource_data.DATA_VIEW_INSTANCE['id'],
+        type_id=resource_data.DATA_VIEW_INSTANCE['type_id'],
+        filter_ids=resource_data.DATA_VIEW_INSTANCE['filter_ids']
+    )
+    return resource

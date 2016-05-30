@@ -77,6 +77,7 @@ DATA_CONTENT_INST = {
 DATA_FILTER_TYPE = {
     'type': 'FilterType',
     'id': str(uuid.uuid4()),
+    'name': 'NameFilter',
     'attribute_type_ids': [
         DATA_ATTR_TYPE_NAME['id']
     ]
@@ -96,6 +97,7 @@ DATA_FILTER_INSTANCE = {
 DATA_VIEW_TYPE = {
     'type': 'ViewType',
     'id': str(uuid.uuid4()),
+    'name': 'SubContentInstances',
     'content_type_ids': [
         DATA_CONTENT_TYPE_SUB['id']
     ],
