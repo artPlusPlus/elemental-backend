@@ -14,8 +14,12 @@ class _SerializerRegistrationParams(object):
     serializer_data = [
         ('ContentType', 'json', json_serialization.serialize_content_type),
         ('AttributeType', 'json', json_serialization.serialize_attribute_type),
+        ('FilterType', 'json', json_serialization.serialize_filter_type),
+        ('ViewType', 'json', json_serialization.serialize_view_type),
         ('ContentInstance', 'json', json_serialization.serialize_content_instance),
         ('AttributeInstance', 'json', json_serialization.serialize_attribute_instance),
+        ('FilterInstance', 'json', json_serialization.serialize_filter_instance),
+        ('ViewInstance', 'json', json_serialization.serialize_view_instance)
     ]
 
 
@@ -34,8 +38,12 @@ class _DeserializerRegistrationParams(object):
     deserializer_data = [
         ('ContentType', 'json', json_serialization.deserialize_content_type),
         ('AttributeType', 'json', json_serialization.deserialize_attribute_type),
+        ('FilterType', 'json', json_serialization.deserialize_filter_type),
+        ('ViewType', 'json', json_serialization.deserialize_view_type),
         ('ContentInstance', 'json', json_serialization.deserialize_content_instance),
         ('AttributeInstance', 'json', json_serialization.deserialize_attribute_instance),
+        ('FilterInstance', 'json', json_serialization.deserialize_filter_instance),
+        ('ViewInstance', 'json', json_serialization.deserialize_view_instance)
     ]
 
 
@@ -68,23 +76,27 @@ def test_controller_handler_registration(controller):
 
 class _ImportParams(object):
     resource_data = [
-        ('ContentType', 'json', resource_data.DATA_CONTENT_TYPE_BASE),
-        ('ContentType', 'json', resource_data.DATA_CONTENT_TYPE_SUB),
-        ('AttributeType', 'json', resource_data.DATA_ATTR_TYPE_NAME),
-        ('AttributeType', 'json', resource_data.DATA_ATTR_TYPE_PATH),
-        ('AttributeInstance', 'json', resource_data.DATA_ATTR_INST_NAME),
-        ('AttributeInstance', 'json', resource_data.DATA_ATTR_INST_PATH)
+        (resource_data.DATA_CONTENT_TYPE_BASE, 'json'),
+        (resource_data.DATA_CONTENT_TYPE_SUB, 'json'),
+        (resource_data.DATA_ATTR_TYPE_NAME, 'json'),
+        (resource_data.DATA_ATTR_TYPE_PATH, 'json'),
+        (resource_data.DATA_ATTR_INST_NAME, 'json'),
+        (resource_data.DATA_ATTR_INST_PATH, 'json'),
+        (resource_data.DATA_FILTER_TYPE, 'json'),
+        (resource_data.DATA_FILTER_INSTANCE, 'json'),
+        (resource_data.DATA_VIEW_TYPE, 'json'),
+        (resource_data.DATA_VIEW_INSTANCE, 'json')
     ]
 
 
 @pytest.mark.parametrize('resource_data', _ImportParams.resource_data)
 def test_controller_resource_import(controller, resource_data):
-    resource_type, data_format, resource_data = resource_data
+    resource_data, data_format = resource_data
 
     resource = controller.import_resource(
-        resource_type, json.dumps(resource_data), data_format)
+        resource_data['type'], json.dumps(resource_data), data_format)
 
-    resource_type = process_elemental_class_value(resource_type)
+    resource_type = process_elemental_class_value(resource_data['type'])
 
     assert isinstance(resource, resource_type)
     assert resource.id == uuid.UUID(resource_data['id'])
@@ -97,7 +109,11 @@ class _ExportParams(object):
         resource_data.DATA_ATTR_TYPE_NAME,
         resource_data.DATA_ATTR_TYPE_PATH,
         resource_data.DATA_ATTR_INST_NAME,
-        resource_data.DATA_ATTR_INST_PATH
+        resource_data.DATA_ATTR_INST_PATH,
+        resource_data.DATA_FILTER_TYPE,
+        resource_data.DATA_FILTER_INSTANCE,
+        resource_data.DATA_VIEW_TYPE,
+        resource_data.DATA_VIEW_INSTANCE
     ]
 
 
@@ -144,9 +160,13 @@ class _GetParams(object):
         (resource_data.DATA_CONTENT_TYPE_SUB, backend.resources.ContentType),
         (resource_data.DATA_ATTR_TYPE_NAME, backend.resources.AttributeType),
         (resource_data.DATA_ATTR_TYPE_PATH, backend.resources.AttributeType),
+        (resource_data.DATA_FILTER_TYPE, backend.resources.FilterType),
+        (resource_data.DATA_VIEW_TYPE, backend.resources.ViewType),
         (resource_data.DATA_ATTR_INST_NAME, backend.resources.AttributeInstance),
         (resource_data.DATA_ATTR_INST_PATH, backend.resources.AttributeInstance),
-        (resource_data.DATA_CONTENT_INST, backend.resources.ContentInstance)
+        (resource_data.DATA_CONTENT_INST, backend.resources.ContentInstance),
+        (resource_data.DATA_FILTER_INSTANCE, backend.resources.FilterInstance),
+        (resource_data.DATA_VIEW_INSTANCE, backend.resources.ViewInstance)
     ]
 
 
@@ -176,9 +196,13 @@ class _PutParams(object):
         (resource_data.DATA_CONTENT_TYPE_SUB, 'name'),
         (resource_data.DATA_ATTR_TYPE_NAME, 'name'),
         (resource_data.DATA_ATTR_TYPE_PATH, 'name'),
+        (resource_data.DATA_FILTER_TYPE, 'name'),
+        (resource_data.DATA_VIEW_TYPE, 'name')
         (resource_data.DATA_ATTR_INST_NAME, 'value'),
         (resource_data.DATA_ATTR_INST_PATH, 'value'),
-        # (resource_data.DATA_CONTENT_INST, 'name')  # 05/04/2016, excluded - nothing to change
+        # (resource_data.DATA_CONTENT_INST, 'name'),  # 05/04/2016, excluded - nothing to change
+        # (resource_data.DATA_FILTER_INSTANCE, ''),  # 5/30/2016, excluded - nothing to change
+        # (resource_data.DATA_VIEW_INSTANCE, '')  # 5/30/2016, excluded - nothing to change
     ]
 
 
@@ -207,9 +231,13 @@ class _DeleteParams(object):
         resource_data.DATA_CONTENT_TYPE_SUB['id'],
         resource_data.DATA_ATTR_TYPE_NAME['id'],
         resource_data.DATA_ATTR_TYPE_PATH['id'],
+        resource_data.DATA_FILTER_TYPE['id'],
+        resource_data.DATA_VIEW_TYPE['id'],
         resource_data.DATA_ATTR_INST_NAME['id'],
         resource_data.DATA_ATTR_INST_PATH['id'],
-        resource_data.DATA_CONTENT_INST['id']
+        resource_data.DATA_CONTENT_INST['id'],
+        resource_data.DATA_FILTER_INSTANCE['id'],
+        resource_data.DATA_VIEW_INSTANCE['id']
     ]
 
 
