@@ -33,10 +33,10 @@ class ViewType(ResourceType):
 
     @ResourceProperty
     def filter_type_ids(self):
-        return self._source_content_type_ids
+        return self._filter_type_ids
 
     @filter_type_ids.setter
-    def filter_ids(self, value):
+    def filter_type_ids(self, value):
         try:
             value = process_uuids_value(value)
         except (TypeError, ValueError):

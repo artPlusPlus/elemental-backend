@@ -1,4 +1,5 @@
 import weakref
+
 import pytest
 
 from elemental_backend.resources._resource_property import ResourceProperty

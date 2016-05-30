@@ -98,3 +98,10 @@ def content_inst_sub():
         attribute_ids=resource_data.DATA_CONTENT_INST['attribute_ids']
     )
     return resource
+
+
+@pytest.fixture(scope='module')
+def view_type():
+    resource = backend.resources.ViewType(
+        id=resource_data.D
+    )

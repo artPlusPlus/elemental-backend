@@ -1,10 +1,12 @@
 import logging
 import weakref
+import collections
 from functools import partial
 
 from elemental_core.util import process_uuid_value
 
 from .errors import (
+    ResourceError,
     ResourceNotFoundError,
     ResourceNotRegisteredError,
     ResourceCollisionError,
@@ -477,12 +479,14 @@ class Model(object):
         except KeyError:
             instance_ids = weakref.WeakSet()
 
+        # Here, the uuid object used as a key is explicitly set to be the
+        # `ResourceType`'s `id` object.
         try:
             del map_type_instances[resource_type.id]
         except KeyError:
             pass
-
-        map_type_instances[resource_type.id] = instance_ids
+        finally:
+            map_type_instances[resource_type.id] = instance_ids
 
         handler = (resource_type, self._handle_resource_type_name_changed)
         type(resource_type).name += handler
@@ -491,12 +495,17 @@ class Model(object):
         map_type_instances = self._map__resource_type__resource_instances
 
         try:
-            instance_ids = map_type_instances[resource_type.id]
-        except KeyError:
-            return
-
-        if not instance_ids:
             del map_type_instances[resource_type.id]
+        except KeyError:
+            msg = (
+                'ResourceType "{0}" not found in '
+                'ResourceType:ResourceInstances map during deregistration.'
+                'This is unexpected and could be a symptom of a problematic'
+                'model.'
+            )
+            msg = msg.format(resource_type.id)
+
+            _LOG.warn(msg)
 
         handler = (resource_type, self._handle_resource_type_name_changed)
         type(resource_type).name -= handler
@@ -746,11 +755,38 @@ class Model(object):
                 msg, resource_type=type(view_instance),
                 resource_id=view_instance.id)
 
+        map_fi_vi = self._map__filter_instance__view_instance
+        for filter_instance_id in view_instance.filter_ids:
+            map_fi_vi[filter_instance_id] = view_instance.id
+
+        map_vi_cis = self._map__view_instance__content_instances
+        try:
+            content_instance_ids = map_vi_cis[view_instance.id]
+        except KeyError:
+            content_instance_ids = weakref.WeakSet()
+        else:
+            del map_vi_cis[view_instance.id]
+        map_vi_cis[view_instance.id] = content_instance_ids
+
         handler = (view_instance,
                    self._handle_view_instance_filter_ids_changed)
         type(view_instance).filter_ids += handler
 
     def _deregister_view_instance(self, view_instance):
+        map_vi_cis = self._map__view_instance__content_instances
+        try:
+            del map_vi_cis[view_instance.id]
+        except KeyError:
+            msg = (
+                'ViewInstance "{0}" not found in '
+                'ViewInstance:ContentInstances map during deregistration.'
+                'This is unexpected and could be a symptom of a problematic'
+                'model.'
+            )
+            msg = msg.format(view_instance.id)
+
+            _LOG.warn(msg)
+
         handler = (view_instance,
                    self._handle_view_instance_filter_ids_changed)
         type(view_instance).filter_ids -= handler
@@ -775,17 +811,21 @@ class Model(object):
 
     def _register_filter_instance(self, filter_instance):
         handler = (filter_instance,
-                   self._handler_filter_instance_kind_params)
+                   self._handler_filter_instance_kind_params_changed)
         type(filter_instance).kind_params += handler
 
     def _deregister_filter_instance(self, filter_instance):
         handler = (filter_instance,
-                   self._handler_filter_instance_kind_params)
+                   self._handler_filter_instance_kind_params_changed)
         type(filter_instance).kind_params -= handler
 
     def _handle_resource_id_changed(
             self, resource, original_value, current_value):
-        raise RuntimeError('Mutable Ids not supported.')
+        msg = 'Mutable Ids are not supported.'
+
+        _LOG.error(msg)
+        raise ResourceError(msg, resource_type=type(resource),
+                            resource_id=resource.id)
 
     def _handle_resource_type_name_changed(
             self, resource_type, original_value, current_value):
@@ -793,7 +833,18 @@ class Model(object):
 
     def _handle_resource_instance_type_id_changed(
             self, resource_instance, original_value, current_value):
-        pass
+        map_rt_ris = self._map__resource_type__resource_instances
+        try:
+            map_rt_ris[original_value].discard(resource_instance.id)
+        except KeyError:
+            pass
+
+        try:
+            resource_instance_ids = map_rt_ris[current_value]
+        except KeyError:
+            resource_instance_ids = weakref.WeakSet()
+            map_rt_ris[current_value] = resource_instance_ids
+        resource_instance_ids.add(resource_instance.id)
 
     def _handle_content_type_base_ids_changed(
             self, content_type, original_value, current_value):
@@ -834,6 +885,20 @@ class Model(object):
         if not filter_type_ids:
             return
 
+        map_ai_ci = self._map__attribute_instance__content_instance
+        content_instance = self._resources[map_ai_ci[attribute_instance.id]]
+        content_type_id = content_instance.type_id
+
+        map_ct_vts = self._map__content_type__view_types
+        view_type_ids = map_ct_vts[content_type_id]
+
+        map_rt_ris = self._map__resource_type__resource_instances
+        for view_type_id in view_type_ids:
+            view_instance_ids = map_rt_ris[view_type_id]
+            for view_instance_id in view_instance_ids:
+                self._update_view_instance_content_instances(
+                    view_instance_id, content_instance_ids=content_instance.id)
+
     def _handle_attribute_instance_source_id_changed(
             self, attribute_instance, original_value, current_value):
         map_sa_tas = self._map__source_attr__target_attrs
@@ -857,33 +922,40 @@ class Model(object):
 
         map_rt_ri = self._map__resource_type__resource_instances
         for view_inst_id in map_rt_ri[view_type.id]:
-            view_inst = self._resources[view_inst_id]
-            self._update_view_instance_content_instances(view_inst)
+            self._update_view_instance_content_instances(view_inst_id)
 
     def _handle_view_type_filter_type_ids_changed(
             self, view_type, original_value, current_value):
         map_rt_ri = self._map__resource_type__resource_instances
         for view_inst_id in map_rt_ri[view_type.id]:
-            view_inst = self._resources[view_inst_id]
-            self._update_view_instance_content_instances(view_inst)
+            self._update_view_instance_content_instances(view_inst_id)
 
     def _handle_view_instance_filter_ids_changed(
             self, view_instance, original_value, current_value):
-        self._update_view_instance_content_instances(view_instance)
+
+        map_fi_vi = self._map__filter_instance__view_instance
+
+        for filter_instance_id in set(original_value).difference(current_value):
+            map_fi_vi[filter_instance_id] = None
+
+        for filter_instance_id in current_value:
+            map_fi_vi[filter_instance_id] = view_instance.id
+
+        self._update_view_instance_content_instances(view_instance.id)
 
     def _handle_filter_type_attribute_type_ids_changed(
             self, filter_type, original_value, current_value):
         map_rt_ri = self._map__resource_type__resource_instances
         map_fi_vi = self._map__filter_instance__view_instance
         for filter_inst_id in map_rt_ri[filter_type.id]:
-            view_inst = self._resources[map_fi_vi[filter_inst_id]]
-            self._update_view_instance_content_instances(view_inst)
+            view_inst_id = map_fi_vi[filter_inst_id]
+            self._update_view_instance_content_instances(view_inst_id)
 
-    def _handler_filter_instance_kind_params(
+    def _handler_filter_instance_kind_params_changed(
             self, filter_instance, original_value, current_value):
         map_fi_vi = self._map__filter_instance__view_instance
-        view_inst = self._resources[map_fi_vi[filter_instance.id]]
-        self._update_view_instance_content_instances(view_inst)
+        view_inst_id = map_fi_vi[filter_instance.id]
+        self._update_view_instance_content_instances(view_inst_id)
 
     def _update_view_type_content_instances(
             self, view_type, add_content_type_ids, remove_content_type_ids):
@@ -897,33 +969,28 @@ class Model(object):
         for type_id in add_content_type_ids:
             content_inst_ids.update(map_rt_ri[type_id])
 
-    def _update_view_instance_content_instances(self, view_instance):
-        map_vt_cis = self._map__view_type__content_instances
+    def _update_view_instance_content_instances(
+            self, view_instance_id, content_instance_ids=None, filter_data=None):
+        view_instance = self._resources[view_instance_id]
+
+        if not filter_data:
+            filter_data = self._resolve_view_instance_filter_data(view_instance)
+
+        if not content_instance_ids:
+            map_vt_cis = self._map__view_type__content_instances
+            content_instance_ids = map_vt_cis[view_instance.type_id]
+        elif not isinstance(content_instance_ids, collections.Iterable):
+            content_instance_ids = [content_instance_ids]
+
         map_vi_cis = self._map__view_instance__content_instances
-
         view_inst_content_inst_ids = map_vi_cis[view_instance.id]
-        view_type_content_inst_ids = map_vt_cis[view_instance.type_id]
-        filter_data = self._resolve_view_instance_filter_data(view_instance)
 
-        for content_inst_id in view_type_content_inst_ids:
+        for content_inst_id in content_instance_ids:
             content_inst = self._resources[content_inst_id]
             if self._apply_filter(content_inst, filter_data):
                 view_inst_content_inst_ids.add(content_inst_id)
             else:
                 view_inst_content_inst_ids.discard(content_inst_id)
-
-    def _update_view_instance_content_instance(
-            self, view_instance, content_instance, filter_data=None):
-        if filter_data is None:
-            filter_data = self._resolve_view_instance_filter_data(view_instance)
-
-        map_vi_cis = self._map__view_instance__content_instances
-        view_inst_content_inst_ids = map_vi_cis[view_instance.id]
-
-        if self._apply_filter(content_instance, filter_data):
-            view_inst_content_inst_ids.add(content_instance.id)
-        else:
-            view_inst_content_inst_ids.discard(content_instance.id)
 
     def _apply_filter(self, content_instance, filter_data):
         result = True

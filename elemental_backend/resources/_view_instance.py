@@ -24,7 +24,9 @@ class ViewInstance(ResourceInstance):
 
         self._filter_ids = value
 
-    def __init__(self, id=None, type_id=None):
+    def __init__(self, id=None, type_id=None, filter_ids=None):
         super(ViewInstance, self).__init__(id=id, type_id=type_id)
 
         self._filter_ids = None
+
+        self.filter_ids = filter_ids
