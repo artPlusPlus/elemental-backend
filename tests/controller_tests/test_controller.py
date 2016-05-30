@@ -197,7 +197,7 @@ class _PutParams(object):
         (resource_data.DATA_ATTR_TYPE_NAME, 'name'),
         (resource_data.DATA_ATTR_TYPE_PATH, 'name'),
         (resource_data.DATA_FILTER_TYPE, 'name'),
-        (resource_data.DATA_VIEW_TYPE, 'name')
+        (resource_data.DATA_VIEW_TYPE, 'name'),
         (resource_data.DATA_ATTR_INST_NAME, 'value'),
         (resource_data.DATA_ATTR_INST_PATH, 'value'),
         # (resource_data.DATA_CONTENT_INST, 'name'),  # 05/04/2016, excluded - nothing to change
