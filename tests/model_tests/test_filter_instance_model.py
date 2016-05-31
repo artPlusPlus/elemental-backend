@@ -48,10 +48,8 @@ def test_model_register_filter_instance(model, id, type_id):
     assert resource.id in type_resources
     assert type_resources[resource.id] is resource
 
-    # Entries in _map__filter_instance__view_instance should be created
-    # when a ViewInstance is registered.
     map_fi_vi = model._map__filter_instance__view_instance
-    assert resource.id not in map_fi_vi
+    assert resource.id in map_fi_vi
 
 
 class _RetrievalParams(object):

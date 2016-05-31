@@ -69,7 +69,7 @@ def process_handler_key(event, action, resource_type):
     return None
 
 
-def _resolve_attr_type(attr_inst_proxy, model_resources_proxy):
+def resolve_attr_type(attr_inst_proxy, model_resources_proxy):
     """
     Used internally to allow AttributeInstances to resolve their AttributeType.
 
@@ -109,6 +109,53 @@ def _resolve_attr_type(attr_inst_proxy, model_resources_proxy):
         else:
             msg = 'Failed to resolve AttributeType "{0}"'
             msg = msg.format(type_id)
+        _LOG.debug(msg)
+
+    return result
+
+
+def resolve_view_instance_content_instances(
+        view_inst_proxy, model_map__view_instance__content_instances_proxy):
+    """
+    Used internally to allow a ViewInstance to resolve its ContentInstance collection.
+
+    Args:
+        view_inst_proxy (weakref.proxy): proxy to a ``ViewInstance`` instance.
+        model_map__view_instance__content_instances_proxy (weakref.proxy): proxy
+            to the `_map__view_instance__content_instances` map of a Model
+            instance.
+
+    Returns:
+        `uuid` collection if proxies are alive and an `
+    """
+    result = None
+
+    if not view_inst_proxy:
+        msg = (
+            'Failed to resolve ContentInstances: '
+            'ViewInstance reference is dead.'
+        )
+        _LOG.warn(msg)
+    elif not model_map__view_instance__content_instances_proxy:
+        msg = (
+            'Failed to resolve ContentInstances: '
+            'ViewInstance: ContentInstances map reference is dead.'
+        )
+        _LOG.warn(msg)
+    else:
+        view_inst_id = view_inst_proxy.id
+        map_vi_cis = model_map__view_instance__content_instances_proxy
+        try:
+            result = map_vi_cis[view_inst_id]
+        except KeyError:
+            pass
+        else:
+            result = result.copy()
+
+        if result:
+            msg = 'Resolved ContentInstances'
+        else:
+            msg = 'Failed to resolve ContentInstances'
         _LOG.debug(msg)
 
     return result

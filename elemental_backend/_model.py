@@ -3,6 +3,7 @@ import weakref
 import collections
 from functools import partial
 
+from elemental_core import NO_VALUE
 from elemental_core.util import process_uuid_value
 
 from .errors import (
@@ -25,7 +26,10 @@ from .resources import (
     FilterType,
     FilterInstance
 )
-from ._util import _resolve_attr_type
+from ._util import (
+    resolve_attr_type,
+    resolve_view_instance_content_instances
+)
 
 
 _LOG = logging.getLogger(__name__)
@@ -50,34 +54,38 @@ class Model(object):
         self._map__attribute_instance__content_instance = weakref.WeakValueDictionary()
         self._map__view_type__content_instances = weakref.WeakKeyDictionary()
         self._map__view_instance__content_instances = weakref.WeakKeyDictionary()
-        self._map__content_type__view_types = weakref.WeakValueDictionary()
+        self._map__content_type__view_types = weakref.WeakKeyDictionary()
         self._map__filter_instance__view_instance = weakref.WeakKeyDictionary()
 
         self._map__resource_type__registrar = {
             Resource: self._register_resource,
+
             ResourceType: self._register_resource_type,
-            ResourceInstance: self._register_resource_instance,
             ContentType: self._register_content_type,
-            ContentInstance: self._register_content_instance,
             AttributeType: self._register_attribute_type,
-            AttributeInstance: self._register_attribute_instance,
             ViewType: self._register_view_type,
-            ViewInstance: self._register_view_instance,
             FilterType: self._register_filter_type,
+
+            ResourceInstance: self._register_resource_instance,
+            ContentInstance: self._register_content_instance,
+            AttributeInstance: self._register_attribute_instance,
+            ViewInstance: self._register_view_instance,
             FilterInstance: self._register_filter_instance
         }
 
         self._map__resource_type__deregistrar = {
             Resource: self._deregister_resource,
+
             ResourceType: self._deregister_resource_type,
-            ResourceInstance: self._deregister_resource_instance,
             ContentType: self._deregister_content_type,
-            ContentInstance: self._deregister_content_instance,
             AttributeType: self._deregister_attribute_type,
-            AttributeInstance: self._deregister_attribute_instance,
             ViewType: self._deregister_view_type,
-            ViewInstance: self._deregister_view_instance,
             FilterType: self._deregister_filter_type,
+
+            ResourceInstance: self._deregister_resource_instance,
+            ContentInstance: self._deregister_content_instance,
+            AttributeInstance: self._deregister_attribute_instance,
+            ViewInstance: self._deregister_view_instance,
             FilterInstance: self._deregister_filter_instance
         }
 
@@ -412,13 +420,11 @@ class Model(object):
             raise ResourceCollisionError(msg, resource_type=type(resource),
                                          resource_id=resource.id)
 
-        try:
-            type_resources = self._map__resource_class__resources[type(resource)]
-        except KeyError:
-            type_resources = weakref.WeakValueDictionary()
-            self._map__resource_class__resources[type(resource)] = type_resources
-
         self._resources[resource.id] = resource
+
+        map_rc_rs = self._map__resource_class__resources
+        type_resources = map_rc_rs.setdefault(type(resource),
+                                              weakref.WeakValueDictionary())
         type_resources[resource.id] = resource
 
         handler = (resource, self._handle_resource_id_changed)
@@ -595,7 +601,8 @@ class Model(object):
         self._fix_map_key(map_at_ct, attribute_type.id)
 
         map_at_fts = self._map__attribute_type__filter_types
-        self._fix_map_key(map_at_fts, attribute_type.id)
+        self._fix_map_key(map_at_fts, attribute_type.id,
+                          items_container_type=weakref.WeakSet)
 
         handler = (attribute_type,
                    self._handle_attribute_type_default_value_changed)
@@ -650,7 +657,7 @@ class Model(object):
         # `AttributeType` only has to exist when the `attribute_type` property
         # is hit.
         attribute_instance.attribute_type = partial(
-            _resolve_attr_type,
+            resolve_attr_type,
             weakref.proxy(attribute_instance),
             weakref.proxy(self._resources)
         )
@@ -688,13 +695,9 @@ class Model(object):
 
         map_ct_vts = self._map__content_type__view_types
         for content_type_id in view_type.content_type_ids:
-            try:
-                view_type_ids = map_ct_vts[content_type_id]
-            except KeyError:
-                view_type_ids = weakref.WeakSet()
-                map_ct_vts[content_type_id] = view_type_ids
+            view_type_ids = map_ct_vts.setdefault(content_type_id,
+                                                  weakref.WeakSet())
             view_type_ids.add(view_type.id)
-
 
         self._update_view_type_content_instances(
             view_type, view_type.content_type_ids, set())
@@ -730,6 +733,20 @@ class Model(object):
             raise ResourceNotRegisteredError(
                 msg, resource_type=type(view_instance),
                 resource_id=view_instance.id)
+
+        # The intention here is to set the value of the `view_instances`'s
+        # `content_instances` property to a callback. This callback will
+        # retrieve a collection of ContentInstance ids.
+        #
+        # This is done so the order in which the `AttributeType` and
+        # `AttributeInstance` come into existence will not matter. The
+        # `AttributeType` only has to exist when the `attribute_type` property
+        # is hit.
+        view_instance.content_instances = partial(
+            resolve_view_instance_content_instances,
+            weakref.proxy(view_instance),
+            weakref.proxy(self._map__view_instance__content_instances)
+        )
 
         map_fi_vi = self._map__filter_instance__view_instance
         for filter_instance_id in view_instance.filter_ids:
@@ -780,6 +797,9 @@ class Model(object):
         type(filter_type).attribute_type_ids -= handler
 
     def _register_filter_instance(self, filter_instance):
+        map_fi_vi = self._map__filter_instance__view_instance
+        self._fix_map_key(map_fi_vi, filter_instance.id)
+
         handler = (filter_instance,
                    self._handler_filter_instance_kind_params_changed)
         type(filter_instance).kind_params += handler
@@ -987,7 +1007,8 @@ class Model(object):
             attr_kind = attr_type.kind
             attr_value = attr_inst.value
 
-            result = attr_kind.filter(attr_value, **filter_inst.kind_params)
+            result = attr_kind.filter_value(attr_value,
+                                            **filter_inst.kind_params)
             if not result:
                 break
 
@@ -1012,7 +1033,7 @@ class Model(object):
         attr_type_inst_ids = map_rt_ris[attribute_type_id]
         content_inst_attr_ids = content_instance.attribute_ids
 
-        result = content_inst_attr_ids.intersection(attr_type_inst_ids)
+        result = set(content_inst_attr_ids).intersection(attr_type_inst_ids)
         try:
             result = result.pop()
         except KeyError:
@@ -1038,8 +1059,10 @@ class Model(object):
             if items_container_type:
                 value = items_container_type()
             else:
-                return
+                value = NO_VALUE
         else:
             del map[key]
 
         map[key] = value
+
+    # def _construct_content_instance_backref(self, ):

@@ -36,6 +36,7 @@ def test_model_unordered_register_and_release(
 
         assert attribute_inst_name.attribute_type is attribute_type_name
         assert attribute_inst_path.attribute_type is attribute_type_path
+        assert content_inst_sub.id in view_instance.content_instances
 
         for resource_idx in range(0, len(_all_resources)):
             resource_idx += resource_idx_offset % len(_all_resources)

@@ -48,10 +48,8 @@ def test_model_register_attribute_instance(model, id, type_id):
     assert resource.id in type_resources
     assert type_resources[resource.id] is resource
 
-    # Entries should not be created in _map__attribute_instance__content_
-    # instance except by a ContentInstance.
     map_ai_ci = model._map__attribute_instance__content_instance
-    assert resource.id not in map_ai_ci
+    assert resource.id in map_ai_ci
 
 
 class _RetrievalParams(object):

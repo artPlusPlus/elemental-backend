@@ -120,6 +120,22 @@ class AttributeInstance(ResourceInstance):
 
         self._attribute_type = value
 
+    @property
+    def content_instance(self):
+        """
+        `ContentInstance` instance that references this `AttributeInstance`.
+
+        Warnings:
+            Care should be taken when setting this value. `Model` instances
+            use it to provide a callback which will resolve a registered
+            `ContentInstance` instance when this property is hit. Changes to
+            this value are not persisted back to any `Model` instances.
+        """
+        result = self._content_instance or None
+        if isinstance(result, (weakref.ref, partial)):
+            result = result()
+        return result
+
     def __init__(self, id=None, type_id=None, value=NO_VALUE, source_id=None):
         """
         Initializes a new `AttributeInstance` instance.
@@ -136,6 +152,7 @@ class AttributeInstance(ResourceInstance):
         self._value = None
         self._source_id = None
         self._attribute_type = None
+        self._content_instance = None
 
         self.value = value
         self.source_id = source_id

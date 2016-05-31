@@ -89,7 +89,7 @@ DATA_FILTER_INSTANCE = {
     'type_id': DATA_FILTER_TYPE['id'],
     'id': str(uuid.uuid4()),
     'kind_params': {
-        'match': '.*Foo'
+        'match': '.*Foo.*'
     }
 }
 
