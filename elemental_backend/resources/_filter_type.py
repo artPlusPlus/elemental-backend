@@ -2,6 +2,7 @@ from elemental_core.util import process_uuids_value
 
 from ._resource_type import ResourceType
 from ._resource_property import ResourceProperty
+from ._resource_reference import ResourceReference
 
 
 class FilterType(ResourceType):
@@ -30,6 +31,10 @@ class FilterType(ResourceType):
             raise ValueError(msg)
 
         self._attribute_type_ids = value
+
+    @ResourceReference
+    def attribute_types(self):
+        return self._attribute_type_ids
 
     def __init__(self, id=None, name=None, attribute_type_ids=None):
         super(FilterType, self).__init__(id=id, name=name)

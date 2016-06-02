@@ -1,5 +1,4 @@
 import weakref
-from functools import partial
 
 from elemental_core.util import process_uuid_value
 
@@ -8,16 +7,21 @@ from ._resource_property import ResourceProperty
 from ._resource_reference import ResourceReference
 
 
-class ResourceInstance(Resource):
+class ViewResult(Resource):
     @ResourceProperty
-    def type_id(self):
-        """
-        uuid: An Id resolving to an `AttributeType` Resource.
-        """
-        return self._type_id
+    def content_instance_ids(self):
+        return self._content_instance_ids
 
-    @type_id.setter
-    def type_id(self, value):
+    @content_instance_ids.setter
+    def content_instance_ids(self, value):
+        self._content_instance_ids = value
+
+    @ResourceProperty
+    def view_instance_id(self):
+        return self._view_instance_id
+
+    @view_instance_id.setter
+    def view_instance_id(self, value):
         try:
             value = process_uuid_value(value)
         except ValueError:
@@ -25,10 +29,10 @@ class ResourceInstance(Resource):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        self._type_id = value
+        self._view_instance_id = value
 
     @ResourceReference
-    def type(self):
+    def view_instance(self):
         """
         `ResourceType` instance from which this `ResourceInstance` is "derived".
 
@@ -38,12 +42,10 @@ class ResourceInstance(Resource):
             `ResourceType` instance when this property is hit. Changes to this
             value are not persisted back to any `Model` instances.
         """
-        return self._type_id
+        self._view_instance_id
 
-    def __init__(self, id=None, type_id=None):
-        super(ResourceInstance, self).__init__(id=id)
+    def __init__(self, id=None):
+        super(ViewResult, self).__init__(id=id)
 
-        self._type_id = None
-        self._type = None
-
-        self.type_id = type_id
+        self._view_instance_id = None
+        self._content_instance_ids = weakref.WeakSet()

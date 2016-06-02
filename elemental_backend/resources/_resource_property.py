@@ -40,12 +40,7 @@ class ResourceProperty(object):
         return type(self)(self._fget, self._fset, fdel)
 
     def subscribe(self, instance, callback):
-        try:
-            subscribers = self._subscribers[instance]
-        except KeyError:
-            subscribers = set()  # set instead of WeakSet to support WeakMethod
-            self._subscribers[instance] = subscribers
-
+        subscribers = self._subscribers.setdefault(instance, set())  # set instead of WeakSet to support WeakMethod
         callback_died_handler = partial(self._callback_died,
                                         weakref.ref(instance))
         try:
@@ -93,6 +88,8 @@ class ResourceProperty(object):
 
     def _callback_died(self, instance_ref, callback_ref):
         instance = instance_ref()
+        if instance is None:
+            return
         try:
             self._subscribers[instance].discard(callback_ref)
         except KeyError:

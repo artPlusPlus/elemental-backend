@@ -2,6 +2,7 @@ from elemental_core.util import process_uuids_value
 
 from ._resource_type import ResourceType
 from ._resource_property import ResourceProperty
+from ._resource_reference import ResourceReference
 
 
 class ViewType(ResourceType):
@@ -31,6 +32,10 @@ class ViewType(ResourceType):
 
         self._content_type_ids = value
 
+    @ResourceReference
+    def content_types(self):
+        return self._content_type_ids
+
     @ResourceProperty
     def filter_type_ids(self):
         return self._filter_type_ids
@@ -48,6 +53,14 @@ class ViewType(ResourceType):
             raise ValueError(msg)
 
         self._filter_type_ids = value
+
+    @ResourceReference
+    def filter_types(self):
+        return self._filter_type_ids
+
+    @ResourceReference
+    def content_instances(self):
+        return self._id
 
     def __init__(self, id=None, name=None, content_type_ids=None,
                  filter_type_ids=None):

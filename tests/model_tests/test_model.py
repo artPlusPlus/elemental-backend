@@ -15,14 +15,14 @@ def test_model_unordered_register_and_release(
     _all_resources = [
         attribute_type_name,
         attribute_type_path,
-        attribute_inst_name,
-        attribute_inst_path,
         content_type_base,
         content_type_sub,
-        content_inst_sub,
         filter_type,
-        filter_instance,
         view_type,
+        attribute_inst_name,
+        attribute_inst_path,
+        content_inst_sub,
+        filter_instance,
         view_instance
     ]
 
@@ -34,8 +34,12 @@ def test_model_unordered_register_and_release(
             resource = _all_resources[resource_idx]
             model.register_resource(resource)
 
-        assert attribute_inst_name.attribute_type is attribute_type_name
-        assert attribute_inst_path.attribute_type is attribute_type_path
+        assert attribute_inst_name.type is attribute_type_name
+        assert attribute_inst_path.type is attribute_type_path
+        assert content_inst_sub.type is content_type_sub
+        assert filter_instance.type is filter_type
+        assert view_instance.type is view_type
+
         assert content_inst_sub.id in view_instance.content_instances
 
         for resource_idx in range(0, len(_all_resources)):

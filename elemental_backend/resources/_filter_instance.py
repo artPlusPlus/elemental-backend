@@ -1,5 +1,6 @@
 from ._resource_instance import ResourceInstance
 from ._resource_property import ResourceProperty
+from ._resource_reference import ResourceReference
 
 
 class FilterInstance(ResourceInstance):
@@ -29,6 +30,10 @@ class FilterInstance(ResourceInstance):
             raise ValueError(msg)
 
         self._kind_params = value
+
+    @ResourceReference
+    def view_instance(self):
+        return self._id
 
     def __init__(self, id=None, type_id=None, kind_params=None):
         super(FilterInstance, self).__init__(id=id, type_id=type_id)

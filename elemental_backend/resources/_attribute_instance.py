@@ -1,12 +1,11 @@
 import logging
-import weakref
-from functools import partial
 
 from elemental_core import NO_VALUE
 from elemental_core.util import process_uuid_value
 
 from ._resource_instance import ResourceInstance
 from ._resource_property import ResourceProperty
+from ._resource_reference import ResourceReference
 
 
 _LOG = logging.getLogger(__name__)
@@ -41,11 +40,14 @@ class AttributeInstance(ResourceInstance):
             - Perhaps some sort of flag could be implemented to enable/disable
             setting of data when the `AttributeKind` cannot be resolved.
         """
-        return self._value
+        try:
+            return self.source.value
+        except AttributeError:
+            return self._value
 
     @value.setter
     def value(self, value):
-        attr_type = self.attribute_type
+        attr_type = self.type
 
         if attr_type:
             kind = attr_type.kind
@@ -91,50 +93,20 @@ class AttributeInstance(ResourceInstance):
 
         self._source_id = value
 
-    @property
-    def attribute_type(self):
+    @ResourceReference
+    def source(self):
         """
-        `AttributeType` instance from which this `AttributeInstance` is "derived".
-
-        Warnings:
-            Care should be taken when setting this value. `Model` instances
-            use it to provide a callback which will resolve a registered
-            `AttributeType` instance when this property is hit. Changes to this
-            value are not persisted back to any `Model` instances.
-
-        See Also:
-            `AttributeInstance.value`
+        `AttributeInstance` object from which this `AttributeInstance` pulls
+            its value.
         """
-        result = self._attribute_type or None
-        if isinstance(result, (weakref.ref, partial)):
-            result = result()
-        return result
+        return self._source_id
 
-    @attribute_type.setter
-    def attribute_type(self, value):
-        if not isinstance(value, partial):
-            try:
-                value = weakref.ref(value)
-            except TypeError:
-                value = value
-
-        self._attribute_type = value
-
-    @property
+    @ResourceReference
     def content_instance(self):
         """
-        `ContentInstance` instance that references this `AttributeInstance`.
-
-        Warnings:
-            Care should be taken when setting this value. `Model` instances
-            use it to provide a callback which will resolve a registered
-            `ContentInstance` instance when this property is hit. Changes to
-            this value are not persisted back to any `Model` instances.
+        `ContentInstance` object that uses this `AttributeInstance`.
         """
-        result = self._content_instance or None
-        if isinstance(result, (weakref.ref, partial)):
-            result = result()
-        return result
+        return self._id
 
     def __init__(self, id=None, type_id=None, value=NO_VALUE, source_id=None):
         """
@@ -151,7 +123,7 @@ class AttributeInstance(ResourceInstance):
 
         self._value = None
         self._source_id = None
-        self._attribute_type = None
+        self._source = None
         self._content_instance = None
 
         self.value = value

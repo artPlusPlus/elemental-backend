@@ -26,6 +26,19 @@ class Resource(ElementalBase):
 
         self._id = value
 
+    @ResourceProperty
+    def stale(self):
+        """
+
+        Returns: True if the
+
+        """
+        return self._stale
+
+    @stale.setter
+    def stale(self, value):
+        self._stale = bool(value)
+
     def __init__(self, id=None):
         """
         Initializes a new `Resource` instance.
@@ -36,5 +49,6 @@ class Resource(ElementalBase):
         super(Resource, self).__init__()
 
         self._id = None
+        self._stale = True
 
         self.id = id

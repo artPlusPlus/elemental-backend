@@ -1,5 +1,6 @@
 from ._resource import Resource
 from ._resource_property import ResourceProperty
+from ._resource_reference import ResourceReference
 
 
 class ResourceType(Resource):
@@ -18,6 +19,10 @@ class ResourceType(Resource):
             value = str(value)
 
         self._name = value
+
+    @ResourceReference
+    def resource_instances(self):
+        return self._id
 
     def __init__(self, id=None, name=None):
         super(ResourceType, self).__init__(id=id)

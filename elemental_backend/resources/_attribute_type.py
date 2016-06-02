@@ -4,6 +4,7 @@ import elemental_kinds  # Not directly used, allows classes to be resolved later
 
 from ._resource_type import ResourceType
 from ._resource_property import ResourceProperty
+from ._resource_reference import ResourceReference
 
 
 class AttributeType(ResourceType):
@@ -61,6 +62,13 @@ class AttributeType(ResourceType):
             return None
 
         return process_elemental_class_value(self.kind_id)
+
+    @ResourceReference
+    def filter_types(self):
+        """
+        List of `FilterType`s that reference this `AttributeType`.
+        """
+        self._id
 
     def __init__(self, id=None, name=None, default_value=NO_VALUE,
                  kind_id=None, kind_properties=None):
