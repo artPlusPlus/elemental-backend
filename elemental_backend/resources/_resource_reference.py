@@ -31,11 +31,19 @@ class ResourceReference(object):
     def __get__(self, instance, _):
         if instance is None:
             return self
-        if self._resource_id_fget is None:
-            raise AttributeError()
+        if self._resource_key_fget is None:
+            # Should never get here, but just in case
+            msg = 'ResourceReference not attached to a getter method.'
+            raise AttributeError(msg)
+
+        result = None
 
         try:
             resolver = self._map__resource_id__resolver[instance.id]
+        except TypeError:
+            # Occurs when instance.id is None. While this happens during
+            # testing, it should not happen in production.
+            return result
         except KeyError:
             msg = (
                 'Failed to resolve Resource:'
@@ -44,9 +52,7 @@ class ResourceReference(object):
             msg = msg.format(repr(instance))
 
             _LOG.warn(msg)
-            return
-
-        result = None
+            return result
 
         resource_key = self._resource_key_fget(instance)
 

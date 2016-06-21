@@ -57,11 +57,10 @@ def test_model_register_view_type(model, id, content_type_ids, filter_type_ids):
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_class__resources[backend.resources.ViewType]
+    cls_resources = model._map__resource_cls__resources[backend.resources.ViewType]
     assert resource.id in all_resources
     assert all_resources[resource.id] is resource
-    assert resource.id in type_resources
-    assert type_resources[resource.id] is resource
+    assert resource.id in cls_resources
 
 
 class _RetrievalParams(object):
@@ -105,6 +104,6 @@ def test_model_release_view_type(model, id):
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_class__resources[backend.resources.ViewType]
+    cls_resources = model._map__resource_cls__resources[backend.resources.ViewType]
     assert resource.id not in all_resources
-    assert resource.id not in type_resources
+    assert resource.id not in cls_resources

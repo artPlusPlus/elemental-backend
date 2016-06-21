@@ -35,12 +35,6 @@ class ViewResult(Resource):
     def view_instance(self):
         """
         `ResourceType` instance from which this `ResourceInstance` is "derived".
-
-        Warnings:
-            Care should be taken when setting this value. `Model` instances
-            use it to provide a callback which will resolve a registered
-            `ResourceType` instance when this property is hit. Changes to this
-            value are not persisted back to any `Model` instances.
         """
         self._view_instance_id
 

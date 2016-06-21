@@ -29,6 +29,7 @@ from .resources import (
     AttributeInstance,
     ViewType,
     ViewInstance,
+    ViewResult,
     FilterType,
     FilterInstance
 )
@@ -65,7 +66,6 @@ class Model(object):
         self._map__content_type__view_types = weakref.WeakKeyDictionary()
         self._map__view_type__content_instances = weakref.WeakKeyDictionary()
         self._map__attribute_instance__content_instance = weakref.WeakValueDictionary()
-        self._map__view_instance__view_result = weakref.WeakKeyDictionary()
         self._map__filter_instance__view_instance = weakref.WeakKeyDictionary()
 
         self._map__resource__stale_dependencies = weakref.WeakKeyDictionary()
@@ -90,6 +90,8 @@ class Model(object):
         self._map__resource_cls__registrar[ViewInstance] = self._register_view_instance
         self._map__resource_cls__registrar[FilterInstance] = self._register_filter_instance
 
+        self._map__resource_cls__registrar[ViewResult] = self._register_view_result
+
         # Deregistrar methods handle handle final teardown when a Resource
         # instance released from management by the Model.
         #
@@ -109,6 +111,8 @@ class Model(object):
         self._map__resource_cls__deregistrar[AttributeInstance] = self._deregister_attribute_instance
         self._map__resource_cls__deregistrar[ViewInstance] = self._deregister_view_instance
         self._map__resource_cls__deregistrar[FilterInstance] = self._deregister_filter_instance
+
+        self._map__resource_cls__deregistrar[ViewResult] = self._deregister_view_result
 
     def register_resource(self, resource):
         """
@@ -445,8 +449,8 @@ class Model(object):
         self._resources[resource.id] = resource
 
         map_rc_rs = self._map__resource_cls__resources
-        class_resources = map_rc_rs.setdefault(type(resource), weakref.WeakSet())
-        class_resources.add(resource.id)
+        cls_resources = map_rc_rs.setdefault(type(resource), weakref.WeakSet())
+        cls_resources.add(resource.id)
 
         handler = (resource, self._handle_resource_id_changed)
         type(resource).id += handler
@@ -777,7 +781,7 @@ class Model(object):
         type(view_type).filter_types += resolver
 
         resolver = (view_type, self._resolve_view_type_content_instances)
-        type(view_type).content_instances = resolver
+        type(view_type).content_instances += resolver
 
     def _deregister_view_type(self, view_type):
         del self._map__view_type__content_instances[view_type.id]
@@ -811,38 +815,27 @@ class Model(object):
         for filter_instance_id in view_instance.filter_ids:
             map_fi_vi[filter_instance_id] = view_instance.id
 
-        map_vi_cis = self._map__view_instance__content_instances
-        self._fix_map_key(map_vi_cis, view_instance.id, weakref.WeakSet)
-
-        self._update_view_instance_content_instances(view_instance.id)
-
         handler = (view_instance,
                    self._handle_view_instance_filter_ids_changed)
         type(view_instance).filter_ids += handler
 
-        resolver = (view_instance, self._resolve_view_instance_view_result)
+        resolver = (view_instance, self._resolve_resource)
         type(view_instance).result += resolver
 
     def _deregister_view_instance(self, view_instance):
-        map_vi_cis = self._map__view_instance__content_instances
-        try:
-            del map_vi_cis[view_instance.id]
-        except KeyError:
-            msg = (
-                'ViewInstance "{0}" not found in '
-                'ViewInstance:ContentInstances map during deregistration.'
-                'This is unexpected and could be a symptom of a problematic'
-                'model.'
-            )
-            msg = msg.format(view_instance.id)
-
-            _LOG.warn(msg)
-
         handler = (view_instance,
                    self._handle_view_instance_filter_ids_changed)
         type(view_instance).filter_ids -= handler
 
         type(view_instance).result -= view_instance
+
+    def _register_view_result(self, view_result):
+        resolver = (view_result,
+                    self._resolve_resource)
+        type(view_result).view_instance += resolver
+
+    def _deregister_view_result(self, view_result):
+        type(view_result).view_instance -= view_result
 
     def _register_filter_type(self, filter_type):
         map_at_fts = self._map__attribute_type__filter_types
@@ -1025,18 +1018,20 @@ class Model(object):
 
     def _handle_filter_type_attribute_type_ids_changed(
             self, filter_type, original_value, current_value):
+        added_attr_type_ids = set(current_value).difference(current_value)
+        removed_attr_type_ids = set(original_value).difference(current_value)
+
         map_at_fts = self._map__attribute_type__filter_types
-        for attribute_type_id in original_value:
-            if attribute_type_id not in current_value:
-                try:
-                    filter_type_ids = map_at_fts[attribute_type_id]
-                except KeyError:
-                    pass
-                else:
-                    filter_type_ids.discard(filter_type.id)
-        for attribute_type_id in current_value:
-            filter_type_ids = map_at_fts.setdefault(attribute_type_id,
-                                                    weakref.WeakSet())
+        for attr_type_id in removed_attr_type_ids:
+            try:
+                filter_type_ids = map_at_fts[attr_type_id]
+            except KeyError:
+                pass
+            else:
+                filter_type_ids.discard(filter_type.id)
+
+        for attr_type_id in added_attr_type_ids:
+            filter_type_ids = map_at_fts.setdefault(attr_type_id, weakref.WeakSet())
             filter_type_ids.add(filter_type.id)
 
         map_rt_ri = self._map__resource_type__resource_instances
@@ -1202,18 +1197,6 @@ class Model(object):
 
         return result
 
-    def _resolve_view_instance_view_result(self, view_instance_id):
-        map_vi_vr = self._map__view_instance__view_result
-
-        try:
-            result = map_vi_vr[view_instance_id]
-        except KeyError:
-            result = None
-        else:
-            result = self._resources.get(result)
-
-        return result
-
     def _resolve_filter_instance_view_instance(self, filter_instance_id):
         map_fi_vi = self._map__filter_instance__view_instance
 
@@ -1229,8 +1212,8 @@ class Model(object):
     def _resolve_content_instance_attribute_instance_from_attribute_type(
             self, content_instance_id, attribute_type_id):
         """
-        Attempts to find an `AttributeInstance` associated with
-            `content_instance` of type `attribute_type_id`.
+        Attempts to find an `AttributeInstance` of type `attribute_type_id`
+            associated with `content_instance` .
         """
         content_instance = self._resources[content_instance_id]
         content_inst_attr_ids = content_instance.attribute_ids

@@ -48,9 +48,6 @@ def test_model_register_view_instance(model, id, type_id):
     assert resource.id in type_resources
     assert type_resources[resource.id] is resource
 
-    map_ai_cis = model._map__view_instance__content_instances
-    assert resource.id in map_ai_cis
-
 
 class _RetrievalParams(object):
     id = [
