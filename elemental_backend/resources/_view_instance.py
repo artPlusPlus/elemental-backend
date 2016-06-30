@@ -1,8 +1,8 @@
 from elemental_core.util import process_uuid_value, process_uuids_value
 
 from ._resource_instance import ResourceInstance
-from ._resource_property import ResourceProperty
 from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
 class ViewInstance(ResourceInstance):
@@ -10,7 +10,7 @@ class ViewInstance(ResourceInstance):
     Represents a stack of `FilterInstances` to be applied against a set of
     `ContentInstances` aggregated by the `ViewInstance's` `ViewType`.
     """
-    @ResourceProperty
+    @property
     def filter_ids(self):
         return self._filter_ids
 
@@ -23,13 +23,20 @@ class ViewInstance(ResourceInstance):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        self._filter_ids = value
+        original_value = self._filter_ids
+        if value != original_value:
+            self._filter_ids = value
+            self._filter_ids_changed(self, original_value, value)
+
+    @property
+    def filter_ids_changed(self):
+        return self._filter_ids_changed
 
     @ResourceReference
     def filter_instances(self):
         self._filter_ids
 
-    @ResourceProperty
+    @property
     def result_id(self):
         return self._result_id
 
@@ -43,6 +50,14 @@ class ViewInstance(ResourceInstance):
             raise ValueError(msg)
 
         self._result_id = value
+        original_value = self._result_id
+        if value != original_value:
+            self._result_id = value
+            self._result_id_changed(self, original_value, value)
+
+    @property
+    def result_id_changed(self):
+        return self._result_id_changed
 
     @ResourceReference
     def result(self):
@@ -53,6 +68,9 @@ class ViewInstance(ResourceInstance):
 
         self._filter_ids = tuple()
         self._result_id = None
+
+        self._filter_ids_changed = PropertyChangedHook()
+        self._result_id_changed = PropertyChangedHook()
 
         self.filter_ids = filter_ids
         self.result_id = result_id

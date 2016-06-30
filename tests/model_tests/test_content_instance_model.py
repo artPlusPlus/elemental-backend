@@ -41,11 +41,11 @@ def test_model_register_content_instance(model, id, type_id):
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_class__resources[backend.resources.ContentInstance]
     assert resource.id in all_resources
     assert all_resources[resource.id] is resource
+
+    type_resources = model._map__resource_cls__resources[backend.resources.ContentInstance]
     assert resource.id in type_resources
-    assert type_resources[resource.id] is resource
 
 
 class _RetrievalParams(object):
@@ -89,6 +89,6 @@ def test_model_release_content_instance(model, id):
         return
 
     all_resources = model._resources
-    type_resources = model._map__resource_class__resources[backend.resources.ContentInstance]
+    type_resources = model._map__resource_cls__resources[backend.resources.ContentInstance]
     assert resource.id not in all_resources
     assert resource.id not in type_resources

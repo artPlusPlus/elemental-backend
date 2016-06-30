@@ -5,7 +5,7 @@ def test_model_unordered_register_and_release(
         model, attribute_type_name, attribute_type_path, attribute_inst_name,
         attribute_inst_path, content_type_base, content_type_sub,
         content_inst_sub, filter_type, filter_instance, view_type,
-        view_instance):
+        view_instance, view_result):
     """
     Tests registering and releasing interdependent resources.
 
@@ -23,7 +23,8 @@ def test_model_unordered_register_and_release(
         attribute_inst_path,
         content_inst_sub,
         filter_instance,
-        view_instance
+        view_instance,
+        view_result
     ]
 
     for resource_idx_offset in range(0, len(_all_resources)):
@@ -40,8 +41,6 @@ def test_model_unordered_register_and_release(
         assert filter_instance.type is filter_type
         assert view_instance.type is view_type
 
-        assert content_inst_sub.id in view_instance.content_instances
-
         for resource_idx in range(0, len(_all_resources)):
             resource_idx += resource_idx_offset % len(_all_resources)
             resource_idx %= len(_all_resources)
@@ -50,14 +49,12 @@ def test_model_unordered_register_and_release(
             model.release_resource(resource.id)
 
     assert len(model._resources) == 0
-    for rc in model._map__resource_class__resources:
-        assert len(model._map__resource_class__resources[rc]) == 0
+    for rc in model._map__resource_cls__resources:
+        assert len(model._map__resource_cls__resources[rc]) == 0
     assert len(model._map__resource_type__resource_instances) == 0
-    assert len(model._map__target_attr__source_attr) == 0
-    assert len(model._map__attribute_type__content_type) == 0
     assert len(model._map__attribute_type__filter_types) == 0
     assert len(model._map__attribute_instance__content_instance) == 0
     assert len(model._map__view_type__content_instances) == 0
-    assert len(model._map__view_instance__content_instances) == 0
     assert len(model._map__content_type__view_types) == 0
     assert len(model._map__filter_instance__view_instance) == 0
+    assert len(model._map__view_result__view_instance) == 0

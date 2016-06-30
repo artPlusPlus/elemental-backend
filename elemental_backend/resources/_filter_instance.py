@@ -1,6 +1,6 @@
 from ._resource_instance import ResourceInstance
-from ._resource_property import ResourceProperty
 from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
 class FilterInstance(ResourceInstance):
@@ -13,7 +13,7 @@ class FilterInstance(ResourceInstance):
     my provide a value for a regular expression that is matched against the
     a 'name' attribute on set of Content Instances.
     """
-    @ResourceProperty
+    @property
     def kind_params(self):
         return self._kind_params
 
@@ -30,6 +30,14 @@ class FilterInstance(ResourceInstance):
             raise ValueError(msg)
 
         self._kind_params = value
+        original_value = self._kind_params
+        if value != original_value:
+            self._kind_params = value
+            self._kind_params_changed(self, original_value, value)
+
+    @property
+    def kind_params_changed(self):
+        return self._kind_params_changed
 
     @ResourceReference
     def view_instance(self):
@@ -38,4 +46,8 @@ class FilterInstance(ResourceInstance):
     def __init__(self, id=None, type_id=None, kind_params=None):
         super(FilterInstance, self).__init__(id=id, type_id=type_id)
 
-        self._kind_params = kind_params or {}
+        self._kind_params = {}
+
+        self._kind_params_changed = PropertyChangedHook()
+
+        self.kind_params = kind_params

@@ -136,6 +136,15 @@ def view_instance():
     resource = backend.resources.ViewInstance(
         id=resource_data.DATA_VIEW_INSTANCE['id'],
         type_id=resource_data.DATA_VIEW_INSTANCE['type_id'],
-        filter_ids=resource_data.DATA_VIEW_INSTANCE['filter_ids']
+        filter_ids=resource_data.DATA_VIEW_INSTANCE['filter_ids'],
+        result_id=resource_data.DATA_VIEW_INSTANCE['result_id']
+    )
+    return resource
+
+
+@pytest.fixture(scope='module')
+def view_result():
+    resource = backend.resources.ViewResult(
+        id=resource_data.DATA_VIEW_RESULT['id']
     )
     return resource

@@ -364,7 +364,8 @@ def serialize_view_instance(view_instance):
         'type': type(view_instance).__name__,
         'id': str(view_instance.id),
         'type_id': str(view_instance.type_id),
-        'filter_ids': [str(f_id) for f_id in view_instance.filter_ids]
+        'filter_ids': [str(f_id) for f_id in view_instance.filter_ids],
+        'result_id': str(view_instance.result_id)
     }
 
     data = _json.dumps(data)
@@ -389,10 +390,12 @@ def deserialize_view_instance(data, view_instance):
     id = data['id']
     type_id = data['type_id']
     filter_ids = data['filter_ids']
+    result_id = data['result_id']
 
     view_instance.id = id
     view_instance.type_id = type_id
     view_instance.filter_ids = filter_ids
+    view_instance.result_id = result_id
 
 
 def bind_to_controller(controller):

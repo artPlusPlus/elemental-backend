@@ -3,8 +3,8 @@ from elemental_core.util import process_elemental_class_value
 import elemental_kinds  # Not directly used, allows classes to be resolved later
 
 from ._resource_type import ResourceType
-from ._resource_property import ResourceProperty
 from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
 class AttributeType(ResourceType):
@@ -13,7 +13,7 @@ class AttributeType(ResourceType):
 
     `AttributeTypes` are referenced by `ContentTypes`.
     """
-    @ResourceProperty
+    @property
     def default_value(self):
         """
         When a referring `AttributeInstance` is unset, this value is used.
@@ -22,9 +22,16 @@ class AttributeType(ResourceType):
 
     @default_value.setter
     def default_value(self, value):
-        self._default_value = value
+        original_value = self._default_value
+        if value != original_value:
+            self._default_value = value
+            self._default_value_changed(self, original_value, value)
 
-    @ResourceProperty
+    @property
+    def default_value_changed(self):
+        return self._default_value_changed
+
+    @property
     def kind_id(self):
         """
         str: The Kind backing this `AttributeType`.
@@ -33,9 +40,16 @@ class AttributeType(ResourceType):
 
     @kind_id.setter
     def kind_id(self, value):
-        self._kind_id = value
+        original_value = self._kind_id
+        if value != original_value:
+            self._kind_id = value
+            self._kind_id_changed(self, original_value, value)
 
-    @ResourceProperty
+    @property
+    def kind_id_changed(self):
+        return self._kind_id_changed
+
+    @property
     def kind_properties(self):
         """
         Dict[str:str]: Data used by the `AttributeType's` Kind.
@@ -54,7 +68,14 @@ class AttributeType(ResourceType):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        self._kind_properties = value
+        original_value = self._kind_properties
+        if value != original_value:
+            self._kind_properties = value
+            self._kind_properties_changed(self, original_value, value)
+
+    @property
+    def kind_properties_changed(self):
+        return self._kind_properties_changed
 
     @property
     def kind(self):
@@ -89,6 +110,10 @@ class AttributeType(ResourceType):
         self._default_value = None
         self._kind_id = None
         self._kind_properties = None
+
+        self._default_value_changed = PropertyChangedHook()
+        self._kind_id_changed = PropertyChangedHook()
+        self._kind_properties_changed = PropertyChangedHook()
 
         self.default_value = default_value
         self.kind_id = kind_id

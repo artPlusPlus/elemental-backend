@@ -1,10 +1,10 @@
 from ._resource import Resource
-from ._resource_property import ResourceProperty
 from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
 class ResourceType(Resource):
-    @ResourceProperty
+    @property
     def name(self):
         """
         str: Label identifying the intention of the `AttributeType's` data.
@@ -18,7 +18,14 @@ class ResourceType(Resource):
         else:
             value = str(value)
 
-        self._name = value
+        original_value = self._name
+        if value != original_value:
+            self._name = value
+            self._name_changed(self, original_value, value)
+
+    @property
+    def name_changed(self):
+        return self._name_changed
 
     @ResourceReference
     def resource_instances(self):
@@ -28,5 +35,6 @@ class ResourceType(Resource):
         super(ResourceType, self).__init__(id=id)
 
         self._name = None
+        self._name_changed = PropertyChangedHook()
 
         self.name = name

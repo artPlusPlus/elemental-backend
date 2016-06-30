@@ -31,6 +31,7 @@ class ResourceReference(object):
     def __get__(self, instance, _):
         if instance is None:
             return self
+
         if self._resource_key_fget is None:
             # Should never get here, but just in case
             msg = 'ResourceReference not attached to a getter method.'
@@ -53,6 +54,12 @@ class ResourceReference(object):
 
             _LOG.warn(msg)
             return result
+        else:
+            if isinstance(resolver, weakref.ref):
+                resolver = resolver()
+                if not resolver:
+                    msg = 'Failed to resolve Resource: Resolver reference dead'
+                    raise RuntimeError(msg)
 
         resource_key = self._resource_key_fget(instance)
 
@@ -84,7 +91,7 @@ class ResourceReference(object):
 
         return result
 
-    def register_resolver(self, resource_instance, resolver):
+    def add_resolver(self, resource_instance, resolver):
         """
         Registers a callable capable of producing one or more `Resources`
             using a given key.
@@ -111,7 +118,7 @@ class ResourceReference(object):
         map_rid_r = self._map__resource_id__resolver
         map_rid_r[resource_instance.id] = resolver
 
-    def deregister_resolver(self, resource_instance):
+    def remove_resolver(self, resource_instance):
         """
         Removes a previously registered resolver callable.
         """
@@ -120,15 +127,6 @@ class ResourceReference(object):
             del map_rid_r[resource_instance.id]
         except KeyError:
             pass
-
-    def __iadd__(self, instance_resolver):
-        instance, resolver = instance_resolver
-        self.register_resolver(instance, resolver)
-        return self
-
-    def __isub__(self, instance):
-        self.deregister_resolver(instance)
-        return self
 
     def _callback_died(self, resource_id_ref, _):
         try:

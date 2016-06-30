@@ -47,9 +47,8 @@ def test_model_register_filter_type(model, id, attribute_type_ids):
     assert resource.id in all_resources
     assert all_resources[resource.id] is resource
 
-    type_resources = model._map__resource_class__resources[backend.resources.FilterType]
+    type_resources = model._map__resource_cls__resources[backend.resources.FilterType]
     assert resource.id in type_resources
-    assert type_resources[resource.id] is resource
 
 
 class _RetrievalParams(object):
@@ -95,5 +94,5 @@ def test_model_release_filter_type(model, id):
     all_resources = model._resources
     assert resource.id not in all_resources
 
-    type_resources = model._map__resource_class__resources[backend.resources.FilterType]
+    type_resources = model._map__resource_cls__resources[backend.resources.FilterType]
     assert resource.id not in type_resources

@@ -1,8 +1,8 @@
 from elemental_core.util import process_uuids_value
 
 from ._resource_type import ResourceType
-from ._resource_property import ResourceProperty
 from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
 class FilterType(ResourceType):
@@ -14,7 +14,7 @@ class FilterType(ResourceType):
     role is to represent this high-level association in order to easily filter
     different types of Content Instances using a single dimension.
     """
-    @ResourceProperty
+    @property
     def attribute_type_ids(self):
         return self._attribute_type_ids
 
@@ -30,7 +30,14 @@ class FilterType(ResourceType):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        self._attribute_type_ids = value
+        original_value = self._attribute_type_ids
+        if value != original_value:
+            self._attribute_type_ids = value
+            self._attribute_type_ids_changed(self, original_value, value)
+
+    @property
+    def attribute_type_ids_changed(self):
+        return self._attribute_type_ids_changed
 
     @ResourceReference
     def attribute_types(self):
@@ -40,5 +47,7 @@ class FilterType(ResourceType):
         super(FilterType, self).__init__(id=id, name=name)
 
         self._attribute_type_ids = []
+
+        self._attribute_type_ids_changed = PropertyChangedHook()
 
         self.attribute_type_ids = attribute_type_ids

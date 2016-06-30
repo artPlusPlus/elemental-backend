@@ -107,11 +107,18 @@ DATA_VIEW_TYPE = {
 }
 
 
+DATA_VIEW_RESULT = {
+    'type': 'ViewResult',
+    'id': str(uuid.uuid4())
+}
+
+
 DATA_VIEW_INSTANCE = {
     'type': 'ViewInstance',
     'type_id': DATA_VIEW_TYPE['id'],
     'id': str(uuid.uuid4()),
     'filter_ids': [
         DATA_FILTER_INSTANCE['id']
-    ]
+    ],
+    'result_id': DATA_VIEW_RESULT['id']
 }

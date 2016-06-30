@@ -1,8 +1,8 @@
 from elemental_core.util import process_uuids_value
 
 from ._resource_type import ResourceType
-from ._resource_property import ResourceProperty
 from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
 class ViewType(ResourceType):
@@ -14,7 +14,7 @@ class ViewType(ResourceType):
     be used to provide an optional means of reducing the base set of
     `ContentInstances`.
     """
-    @ResourceProperty
+    @property
     def content_type_ids(self):
         return self._content_type_ids
 
@@ -30,13 +30,20 @@ class ViewType(ResourceType):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        self._content_type_ids = value
+        original_value = self._content_type_ids
+        if value != original_value:
+            self._content_type_ids = value
+            self._content_type_ids_changed(self, original_value, value)
+
+    @property
+    def content_type_ids_changed(self):
+        return self._content_type_ids_changed
 
     @ResourceReference
     def content_types(self):
         return self._content_type_ids
 
-    @ResourceProperty
+    @property
     def filter_type_ids(self):
         return self._filter_type_ids
 
@@ -52,7 +59,14 @@ class ViewType(ResourceType):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        self._filter_type_ids = value
+        original_value = self._filter_type_ids
+        if value != original_value:
+            self._filter_type_ids = value
+            self._filter_type_ids_changed(self, original_value, value)
+
+    @property
+    def filter_type_ids_changed(self):
+        return self._filter_type_ids_changed
 
     @ResourceReference
     def filter_types(self):
@@ -68,6 +82,9 @@ class ViewType(ResourceType):
 
         self._content_type_ids = set()
         self._filter_type_ids = []
+
+        self._content_type_ids_changed = PropertyChangedHook()
+        self._filter_type_ids_changed = PropertyChangedHook()
 
         self.content_type_ids = content_type_ids
         self.filter_type_ids = filter_type_ids

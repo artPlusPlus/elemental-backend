@@ -1,14 +1,15 @@
 from elemental_core import ElementalBase
 from elemental_core.util import process_uuid_value
 
-from ._resource_property import ResourceProperty
+from ._property_changed_hook import PropertyChangedHook
 
 
 class Resource(ElementalBase):
     """
     Base class for content data.
     """
-    @ResourceProperty
+
+    @property
     def id(self):
         """
         Uniquely identifies a `Resource`.
@@ -24,20 +25,24 @@ class Resource(ElementalBase):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        self._id = value
+        original_value = self._id
+        if value != original_value:
+            self._id = value
+            self.id_changed(self, original_value, value)
 
-    @ResourceProperty
-    def stale(self):
-        """
+    @property
+    def id_changed(self):
+        return self._id_changed
 
-        Returns: True if the
+    @id_changed.setter
+    def id_changed(self, value):
+        if value is not self._id_changed:
+            raise TypeError('id_changed cannot be set')
 
-        """
-        return self._stale
-
-    @stale.setter
-    def stale(self, value):
-        self._stale = bool(value)
+    @id_changed.setter
+    def id_changed(self, value):
+        if value is not self._id_changed:
+            raise TypeError('id_changed cannot be set')
 
     def __init__(self, id=None):
         """
@@ -50,5 +55,7 @@ class Resource(ElementalBase):
 
         self._id = None
         self._stale = True
+
+        self._id_changed = PropertyChangedHook()
 
         self.id = id

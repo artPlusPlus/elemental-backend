@@ -1,15 +1,15 @@
-from elemental_core.util import process_uuid_value, process_uuids_value
+from elemental_core.util import process_uuids_value
 
 from ._resource_instance import ResourceInstance
-from ._resource_property import ResourceProperty
 from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
 class ContentInstance(ResourceInstance):
     """
     Represents a unique collection of `AttributeInstances`.
     """
-    @ResourceProperty
+    @property
     def attribute_ids(self):
         """
         List[uuid]: A sequence of Ids resolving to valid `AttributeInstance` Resources.
@@ -25,7 +25,14 @@ class ContentInstance(ResourceInstance):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        self._attribute_ids = value
+        original_value = self._attribute_ids
+        if value != original_value:
+            self._attribute_ids = value
+            self._attribute_ids_changed(self, original_value, value)
+
+    @property
+    def attribute_ids_changed(self):
+        return self._attribute_ids_changed
 
     @ResourceReference
     def attributes(self):
@@ -44,5 +51,7 @@ class ContentInstance(ResourceInstance):
         super(ContentInstance, self).__init__(id=id, type_id=type_id)
 
         self._attribute_ids = None
+
+        self._attribute_ids_changed = PropertyChangedHook()
 
         self.attribute_ids = attribute_ids

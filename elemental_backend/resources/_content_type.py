@@ -1,7 +1,7 @@
 from elemental_core.util import process_uuids_value
 
 from ._resource_type import ResourceType
-from ._resource_property import ResourceProperty
+from ._property_changed_hook import PropertyChangedHook
 from ._resource_reference import ResourceReference
 
 
@@ -11,7 +11,7 @@ class ContentType(ResourceType):
 
     A `ContentType` can inherit from other `ContentTypes`.
     """
-    @ResourceProperty
+    @property
     def base_ids(self):
         """
         List[uuid]: A sequence of Ids resolving to other `ContentType` instances.
@@ -37,7 +37,21 @@ class ContentType(ResourceType):
 
         self._base_ids = value
 
-    @ResourceProperty
+        original_value = self._base_ids
+        if value != original_value:
+            self._base_ids = value
+            self._base_ids_changed(self, original_value, value)
+
+    @property
+    def base_ids_changed(self):
+        return self._base_ids_changed
+
+    @base_ids_changed.setter
+    def base_ids_changed(self, value):
+        if value is not self._base_ids_changed:
+            raise TypeError('base_ids_changed cannot be set')
+
+    @property
     def attribute_type_ids(self):
         """
         List[uuid]: A sequence of Ids resolving to `AttributeType` instances.
@@ -56,7 +70,14 @@ class ContentType(ResourceType):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        self._attribute_type_ids = value
+        original_value = self._attribute_type_ids
+        if value != original_value:
+            self._attribute_type_ids = value
+            self._attribute_type_ids_changed(self, original_value, value)
+
+    @property
+    def attribute_type_ids_changed(self):
+        return self._attribute_type_ids_changed
 
     @ResourceReference
     def attribute_types(self):
@@ -84,6 +105,9 @@ class ContentType(ResourceType):
 
         self._base_ids = None
         self._attribute_type_ids = None
+
+        self._base_ids_changed = PropertyChangedHook()
+        self._attribute_type_ids_changed = PropertyChangedHook()
 
         self.base_ids = base_ids
         self.attribute_type_ids = attribute_type_ids

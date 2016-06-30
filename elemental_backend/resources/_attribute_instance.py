@@ -4,8 +4,8 @@ from elemental_core import NO_VALUE
 from elemental_core.util import process_uuid_value
 
 from ._resource_instance import ResourceInstance
-from ._resource_property import ResourceProperty
 from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
 _LOG = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class AttributeInstance(ResourceInstance):
     An AttributeInstance holds value data for an AttributeType relative to
     a ContentInstance.
     """
-    @ResourceProperty
+    @property
     def value(self):
         """
         Data managed by the `AttributeInstance` instance.
@@ -70,9 +70,16 @@ class AttributeInstance(ResourceInstance):
             msg = msg.format(self.id, self.type_id)
             _LOG.debug(msg)
 
-        self._value = value
+        original_value = self._value
+        if value != original_value:
+            self._value = value
+            self._value_changed(self, original_value, value)
 
-    @ResourceProperty
+    @property
+    def value_changed(self):
+        return self._value_changed
+
+    @property
     def source_id(self):
         """
         uuid: An Id resolving to an `AttributeInstance` Resource.
@@ -91,7 +98,16 @@ class AttributeInstance(ResourceInstance):
             msg = msg.format(value)
             raise ValueError(msg)
 
+        if value == self._source_id:
+            return
+
+        original_value = self._source_id
         self._source_id = value
+        self._source_id_changed(self, original_value, self._source_id)
+
+    @property
+    def source_id_changed(self):
+        return self._source_id_changed
 
     @ResourceReference
     def source(self):
@@ -125,6 +141,9 @@ class AttributeInstance(ResourceInstance):
         self._source_id = None
         self._source = None
         self._content_instance = None
+
+        self._value_changed = PropertyChangedHook()
+        self._source_id_changed = PropertyChangedHook()
 
         self.value = value
         self.source_id = source_id

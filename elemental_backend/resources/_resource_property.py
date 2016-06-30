@@ -6,10 +6,11 @@ class ResourceProperty(object):
     """
     Observable property intended for use by `Resource` classes.
     """
-    def __init__(self, fget=None, fset=None, fdel=None):
+    def __init__(self, fget=None, fset=None, fdel=None, fpost=None):
         self._fget = fget
         self._fset = fset
         self._fdel = fdel
+        self._fpost = fpost
         self._subscribers = weakref.WeakKeyDictionary()
 
     def __get__(self, instance, owner):
@@ -31,13 +32,13 @@ class ResourceProperty(object):
             self._on_changed(instance, original_value, current_value)
 
     def getter(self, fget):
-        return type(self)(fget, self._fset, self._fdel)
+        return type(self)(fget, self._fset, self._fdel, self._fpost)
 
     def setter(self, fset):
-        return type(self)(self._fget, fset, self._fdel)
+        return type(self)(self._fget, fset, self._fdel, self._fpost)
 
     def deleter(self, fdel):
-        return type(self)(self._fget, self._fset, fdel)
+        return type(self)(self._fget, self._fset, fdel, self._fpost)
 
     def subscribe(self, instance, callback):
         subscribers = self._subscribers.setdefault(instance, set())  # set instead of WeakSet to support WeakMethod

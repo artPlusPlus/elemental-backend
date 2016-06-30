@@ -44,9 +44,8 @@ def test_model_register_filter_instance(model, id, type_id):
     assert resource.id in all_resources
     assert all_resources[resource.id] is resource
 
-    type_resources = model._map__resource_class__resources[backend.resources.FilterInstance]
+    type_resources = model._map__resource_cls__resources[backend.resources.FilterInstance]
     assert resource.id in type_resources
-    assert type_resources[resource.id] is resource
 
     map_fi_vi = model._map__filter_instance__view_instance
     assert resource.id in map_fi_vi
@@ -95,7 +94,7 @@ def test_model_release_filter_instance(model, id):
     all_resources = model._resources
     assert resource.id not in all_resources
 
-    type_resources = model._map__resource_class__resources[backend.resources.FilterInstance]
+    type_resources = model._map__resource_cls__resources[backend.resources.FilterInstance]
     assert resource.id not in type_resources
 
     map_fi_vi = model._map__filter_instance__view_instance
