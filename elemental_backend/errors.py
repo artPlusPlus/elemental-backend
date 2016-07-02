@@ -268,6 +268,13 @@ class ResourceCollisionError(ResourceNotRegisteredError):
     pass
 
 
+class ResourceNotRetrievedError(ResourceError):
+    """
+    Raised when the retrieval of a `Resource` fails.
+    """
+    pass
+
+
 class ResourceNotDeletedError(ResourceError):
     """
     Raised when a `Resource` cannot be deleted.

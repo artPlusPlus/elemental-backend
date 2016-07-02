@@ -1,4 +1,5 @@
 import weakref
+import collections
 
 # from elemental_core.util import process_uuid_value
 
@@ -14,6 +15,12 @@ class ViewResult(Resource):
 
     @content_instance_ids.setter
     def content_instance_ids(self, value):
+        if not value:
+            value = tuple()
+        elif not isinstance(value, collections.Iterable):
+            value = [value]
+        value = weakref.WeakSet(value)
+
         original_value = self._content_instance_ids
         if value != original_value:
             self._content_instance_ids = value
@@ -24,11 +31,15 @@ class ViewResult(Resource):
         return self._content_instance_ids_changed
 
     @ResourceReference
+    def content_instances(self):
+        return self._content_instance_ids
+
+    @ResourceReference
     def view_instance(self):
         """
         `ResourceType` instance from which this `ResourceInstance` is "derived".
         """
-        self._id
+        return self._id
 
     def __init__(self, id=None):
         super(ViewResult, self).__init__(id=id)

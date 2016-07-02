@@ -17,7 +17,8 @@ from .errors import (
     ResourceNotFoundError,
     ResourceNotRegisteredError,
     ResourceCollisionError,
-    ResourceNotReleasedError
+    ResourceNotReleasedError,
+    ResourceNotRetrievedError
 )
 from .resources import (
     Resource,
@@ -93,27 +94,35 @@ class Model(object):
 
         self._map__resource_cls__registrar[ViewResult] = self._register_view_result
 
-        # Deregistrar methods handle handle final teardown when a Resource
+        # Responder methods handle evaluation of resource data at the time of
+        # retrieval.
+        self._map__resource_cls__retriever = weakref.WeakKeyDictionary()
+
+        # self._map__resource_cls__retriever[Resource] = self._retrieve_resource
+
+        self._map__resource_cls__retriever[ViewResult] = self._retrieve_view_result
+
+        # Releaser methods handle handle final teardown when a Resource
         # instance released from management by the Model.
         #
         # See Model.release_resource()
-        self._map__resource_cls__deregistrar = weakref.WeakKeyDictionary()
+        self._map__resource_cls__releaser = weakref.WeakKeyDictionary()
 
-        self._map__resource_cls__deregistrar[Resource] = self._deregister_resource
+        self._map__resource_cls__releaser[Resource] = self._release_resource
 
-        self._map__resource_cls__deregistrar[ResourceType] = self._deregister_resource_type
-        self._map__resource_cls__deregistrar[ContentType] = self._deregister_content_type
-        self._map__resource_cls__deregistrar[AttributeType] = self._deregister_attribute_type
-        self._map__resource_cls__deregistrar[ViewType] = self._deregister_view_type
-        self._map__resource_cls__deregistrar[FilterType] = self._deregister_filter_type
+        self._map__resource_cls__releaser[ResourceType] = self._release_resource_type
+        self._map__resource_cls__releaser[ContentType] = self._release_content_type
+        self._map__resource_cls__releaser[AttributeType] = self._release_attribute_type
+        self._map__resource_cls__releaser[ViewType] = self._release_view_type
+        self._map__resource_cls__releaser[FilterType] = self._release_filter_type
 
-        self._map__resource_cls__deregistrar[ResourceInstance] = self._deregister_resource_instance
-        self._map__resource_cls__deregistrar[ContentInstance] = self._deregister_content_instance
-        self._map__resource_cls__deregistrar[AttributeInstance] = self._deregister_attribute_instance
-        self._map__resource_cls__deregistrar[ViewInstance] = self._deregister_view_instance
-        self._map__resource_cls__deregistrar[FilterInstance] = self._deregister_filter_instance
+        self._map__resource_cls__releaser[ResourceInstance] = self._release_resource_instance
+        self._map__resource_cls__releaser[ContentInstance] = self._release_content_instance
+        self._map__resource_cls__releaser[AttributeInstance] = self._release_attribute_instance
+        self._map__resource_cls__releaser[ViewInstance] = self._release_view_instance
+        self._map__resource_cls__releaser[FilterInstance] = self._release_filter_instance
 
-        self._map__resource_cls__deregistrar[ViewResult] = self._deregister_view_result
+        self._map__resource_cls__releaser[ViewResult] = self._release_view_result
 
     def register_resource(self, resource):
         """
@@ -276,18 +285,18 @@ class Model(object):
 
             _LOG.error(msg)
             raise ValueError(msg)
-
-        if _resource_id:
-            resource_id = _resource_id
         else:
-            msg = (
-                'Failed to retrieve resource with id "{0}":'
-                'Invalid UUID value'
-            )
-            msg = msg.format(_resource_id)
+            if _resource_id:
+                resource_id = _resource_id
+            else:
+                msg = (
+                    'Failed to retrieve resource with id "{0}":'
+                    'Invalid UUID value'
+                )
+                msg = msg.format(_resource_id)
 
-            _LOG.error(msg)
-            raise ValueError(msg)
+                _LOG.error(msg)
+                raise ValueError(msg)
 
         try:
             result = self._resources[resource_id]
@@ -301,6 +310,35 @@ class Model(object):
             _LOG.error(msg)
             raise ResourceNotFoundError(msg, resource_type=None,
                                         resource_id=resource_id)
+
+        retrievers = self._compute_resource_retrievers(result)
+        sorted_resource_types = sorted(retrievers.keys(),
+                                       key=lambda cls: len(cls.mro()))
+        retriever_error = None
+        problem_retriever = None
+        while not retriever_error and sorted_resource_types:
+            resource_type = sorted_resource_types.pop(0)
+            retriever = retrievers[resource_type]
+
+            try:
+                result = retriever(result)
+            except ResourceNotFoundError:
+                raise
+            except Exception as e:
+                retriever_error = e
+                problem_retriever = retriever
+
+        if retriever_error:
+            msg = (
+                'Failed to retrieve resource: '
+                'Retriever "{0}" failed - "{1}"'
+            )
+            msg = msg.format(problem_retriever.__name__,
+                             str(retriever_error))
+
+            _LOG.error(msg)
+            raise ResourceNotRetrievedError(msg, resource_type=type(result),
+                                            resource_id=resource_id)
 
         msg = 'Retrieved resource: "{0}" - "{1}"'
         msg = msg.format(repr(type(result)), result.id)
@@ -429,9 +467,16 @@ class Model(object):
                 result[resource_class] = registrar
         return result
 
+    def _compute_resource_retrievers(self, resource):
+        result = {}
+        for resource_class, registrar in self._map__resource_cls__retriever.items():
+            if isinstance(resource, resource_class):
+                result[resource_class] = registrar
+        return result
+
     def _compute_resource_deregistrars(self, resource):
         result = {}
-        for resource_type, deregistrar in self._map__resource_cls__deregistrar.items():
+        for resource_type, deregistrar in self._map__resource_cls__releaser.items():
             if isinstance(resource, resource_type):
                 result[resource_type] = deregistrar
         return result
@@ -458,7 +503,21 @@ class Model(object):
         handler = self._handle_resource_id_changed
         hook.add_handler(handler)
 
-    def _deregister_resource(self, resource):
+    # def _retrieve_resource(self, resource_id, resource):
+        # try:
+        #     return self._resources[resource_id]
+        # except KeyError:
+        #     msg = (
+        #         'Failed to retrieve resource:'
+        #         'No resource found matching id "{0}"'
+        #     )
+        #     msg = msg.format(resource_id)
+        #
+        #     _LOG.error(msg)
+        #     raise ResourceNotFoundError(msg, resource_type=None,
+        #                                 resource_id=resource_id)
+
+    def _release_resource(self, resource):
         try:
             del self._resources[resource.id]
         except KeyError:
@@ -502,7 +561,7 @@ class Model(object):
         resolver = self._resolve_resource_type_resource_instances
         ref.add_resolver(resource_type, resolver)
 
-    def _deregister_resource_type(self, resource_type):
+    def _release_resource_type(self, resource_type):
         map_type_instances = self._map__resource_type__resource_instances
 
         try:
@@ -540,7 +599,7 @@ class Model(object):
         resolver = self._resolve_resource
         ref.add_resolver(resource_instance, resolver)
 
-    def _deregister_resource_instance(self, resource_instance):
+    def _release_resource_instance(self, resource_instance):
         map_type_instances = self._map__resource_type__resource_instances
 
         try:
@@ -585,7 +644,7 @@ class Model(object):
         resolver = self._resolve_content_type_view_types
         ref.add_resolver(content_type, resolver)
 
-    def _deregister_content_type(self, content_type):
+    def _release_content_type(self, content_type):
         map_ct_vts = self._map__content_type__view_types
         try:
             view_type_ids = map_ct_vts.pop(content_type.id)
@@ -650,7 +709,7 @@ class Model(object):
         resolver = self._resolve_resources
         ref.add_resolver(content_instance, resolver)
 
-    def _deregister_content_instance(self, content_instance):
+    def _release_content_instance(self, content_instance):
         map_ai_ci = self._map__attribute_instance__content_instance
         for attribute_id in content_instance.attribute_ids:
             try:
@@ -690,7 +749,7 @@ class Model(object):
         resolver = self._resolve_attribute_type_filter_types
         ref.add_resolver(attribute_type, resolver)
 
-    def _deregister_attribute_type(self, attribute_type):
+    def _release_attribute_type(self, attribute_type):
         map_at_fts = self._map__attribute_type__filter_types
         try:
             del map_at_fts[attribute_type.id]
@@ -748,7 +807,7 @@ class Model(object):
         resolver = self._resolve_attribute_instance_content_instance
         ref.add_resolver(attribute_instance, resolver)
 
-    def _deregister_attribute_instance(self, attribute_instance):
+    def _release_attribute_instance(self, attribute_instance):
         map_ai_ci = self._map__attribute_instance__content_instance
         try:
             del map_ai_ci[attribute_instance.id]
@@ -804,7 +863,7 @@ class Model(object):
         resolver = self._resolve_view_type_content_instances
         ref.add_resolver(view_type, resolver)
 
-    def _deregister_view_type(self, view_type):
+    def _release_view_type(self, view_type):
         del self._map__view_type__content_instances[view_type.id]
 
         hook = view_type.content_type_ids_changed
@@ -852,11 +911,15 @@ class Model(object):
         handler = self._handle_view_instance_result_id_changed
         hook.add_handler(handler)
 
+        ref = type(view_instance).filter_instances
+        resolver = self._resolve_resources
+        ref.add_resolver(view_instance, resolver)
+
         ref = type(view_instance).result
         resolver = self._resolve_resource
         ref.add_resolver(view_instance, resolver)
 
-    def _deregister_view_instance(self, view_instance):
+    def _release_view_instance(self, view_instance):
         hook = view_instance.filter_ids_changed
         handler = self._handle_view_instance_filter_ids_changed
         hook.remove_handler(handler)
@@ -864,6 +927,9 @@ class Model(object):
         hook = view_instance.result_id_changed
         handler = self._handle_view_instance_result_id_changed
         hook.remove_handler(handler)
+
+        ref = type(view_instance).filter_instances
+        ref.remove_resolver(view_instance)
 
         ref = type(view_instance).result
         ref.remove_resolver(view_instance)
@@ -877,7 +943,18 @@ class Model(object):
         resolver = self._resolve_view_result_view_instance
         ref.add_resolver(view_result, resolver)
 
-    def _deregister_view_result(self, view_result):
+        ref = type(view_result).content_instances
+        resolver = self._resolve_resources
+        ref.add_resolver(view_result, resolver)
+
+    def _retrieve_view_result(self, view_result):
+        result = view_result
+
+        self._update_view_result_content_instances(view_result.id)
+
+        return result
+
+    def _release_view_result(self, view_result):
         map_vr_vi = self._map__view_result__view_instance
         try:
             del map_vr_vi[view_result.id]
@@ -889,6 +966,9 @@ class Model(object):
         hook.remove_handler(handler)
 
         ref = type(view_result).view_instance
+        ref.remove_resolver(view_result)
+
+        ref = type(view_result).content_instances
         ref.remove_resolver(view_result)
 
     def _register_filter_type(self, filter_type):
@@ -910,7 +990,7 @@ class Model(object):
         resolver = self._resolve_resources
         ref.add_resolver(filter_type, resolver)
 
-    def _deregister_filter_type(self, filter_type):
+    def _release_filter_type(self, filter_type):
         map_at_fts = self._map__attribute_type__filter_types
         for attribute_type_id in filter_type.attribute_type_ids:
             try:
@@ -941,7 +1021,7 @@ class Model(object):
         resolver = self._resolve_filter_instance_view_instance
         ref.add_resolver(filter_instance, resolver)
 
-    def _deregister_filter_instance(self, filter_instance):
+    def _release_filter_instance(self, filter_instance):
         map_fi_vi = self._map__filter_instance__view_instance
         try:
             del map_fi_vi[filter_instance.id]
@@ -1138,7 +1218,7 @@ class Model(object):
             content_inst_ids.update(map_rt_ri.get(type_id, tuple()))
 
     def _update_view_result_content_instances(
-            self, view_instance_id, content_instance_ids=None,
+            self, view_result_id, content_instance_ids=None,
             filter_instance_ids=None):
         """
         Computes the ContentInstances referenced by a ViewResult.
@@ -1147,12 +1227,12 @@ class Model(object):
         by FilterInstances that are managed by the ViewResult's corresponding
         ViewInstance.
         """
-        view_instance = self._resources.get(view_instance_id)
-        if not view_instance:
+        view_result = self._resources.get(view_result_id)
+        if not view_result:
             return
 
-        view_result = view_instance.view_result
-        if not view_result:
+        view_instance = view_result.view_instance
+        if not view_instance:
             return
 
         view_result_content_instance_ids = view_result.content_instance_ids.copy()

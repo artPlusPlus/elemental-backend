@@ -63,31 +63,16 @@ class ResourceReference(object):
 
         resource_key = self._resource_key_fget(instance)
 
-        if resource_key:
-            try:
-                result = resolver(resource_key)
-            except AttributeError:
-                if not self._model_resources:
-                    msg = (
-                        'Failed to resolve Resource: '
-                        'Model._resources reference is dead.'
-                    )
-                    _LOG.error(msg)
-            else:
-                if result:
-                    msg = 'Resolved Resource: "{0}"'
-                    msg = msg.format(repr(result))
-                else:
-                    msg = 'Failed to resolve Resource "{0}"'
-                    msg = msg.format(resource_key)
-                _LOG.debug(msg)
+        try:
+            result = resolver(resource_key)
+        except Exception as e:
+            msg = 'Failed to resolve Resource reference: "{0}" - {1}: {2}'
+            msg = msg.format(resource_key, type(e).__name__, e)
+            _LOG.debug(msg)
         else:
-            msg = (
-                'Failed to resolve Resource: '
-                'invalid Resource Id "{0}"'
-            )
-            msg = msg.format(resource_key)
-            _LOG.warn(msg)
+            msg = 'Resolved Resource: "{0}"'
+            msg = msg.format(repr(result))
+            _LOG.debug(msg)
 
         return result
 

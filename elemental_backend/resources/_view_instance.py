@@ -34,7 +34,7 @@ class ViewInstance(ResourceInstance):
 
     @ResourceReference
     def filter_instances(self):
-        self._filter_ids
+        return self._filter_ids
 
     @property
     def result_id(self):
