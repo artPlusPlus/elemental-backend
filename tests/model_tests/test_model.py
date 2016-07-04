@@ -4,8 +4,8 @@ from tests.fixtures import *
 def test_model_unordered_register_and_release(
         model, attribute_type_name, attribute_type_path, attribute_inst_name,
         attribute_inst_path, content_type_base, content_type_sub,
-        content_inst_sub, filter_type, filter_instance, view_type,
-        view_instance, view_result):
+        content_inst_sub, filter_type, filter_instance, sorter_type,
+        sorter_instance, view_type, view_instance, view_result):
     """
     Tests registering and releasing interdependent resources.
 
@@ -18,11 +18,13 @@ def test_model_unordered_register_and_release(
         content_type_base,
         content_type_sub,
         filter_type,
+        sorter_type,
         view_type,
         attribute_inst_name,
         attribute_inst_path,
         content_inst_sub,
         filter_instance,
+        sorter_instance,
         view_instance,
         view_result
     ]

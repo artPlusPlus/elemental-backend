@@ -89,7 +89,14 @@ class AttributeType(ResourceType):
         """
         List of `FilterType`s that reference this `AttributeType`.
         """
-        self._id
+        return self._id
+
+    @ResourceReference
+    def sorter_types(self):
+        """
+        List of `SorterType`s that reference this `AttributeType`.
+        """
+        return self._id
 
     def __init__(self, id=None, name=None, default_value=NO_VALUE,
                  kind_id=None, kind_properties=None):

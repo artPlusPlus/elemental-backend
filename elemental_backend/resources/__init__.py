@@ -10,3 +10,5 @@ from ._view_instance import ViewInstance
 from ._view_result import ViewResult
 from ._filter_type import FilterType
 from ._filter_instance import FilterInstance
+from ._sorter_type import SorterType
+from ._sorter_instance import SorterInstance

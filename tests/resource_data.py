@@ -94,6 +94,24 @@ DATA_FILTER_INSTANCE = {
 }
 
 
+DATA_SORTER_TYPE = {
+    'type': 'SorterType',
+    'id': str(uuid.uuid4()),
+    'name': 'NameSorter',
+    'attribute_type_ids': [
+        DATA_ATTR_TYPE_NAME['id']
+    ]
+}
+
+
+DATA_SORTER_INSTANCE = {
+    'type': 'SorterInstance',
+    'type_id': DATA_SORTER_TYPE['id'],
+    'id': str(uuid.uuid4()),
+    'kind_params': {}
+}
+
+
 DATA_VIEW_TYPE = {
     'type': 'ViewType',
     'id': str(uuid.uuid4()),
@@ -104,6 +122,9 @@ DATA_VIEW_TYPE = {
     'filter_type_ids': [
         DATA_FILTER_TYPE['id']
     ],
+    'sorter_type_ids': [
+        DATA_SORTER_TYPE['id']
+    ]
 }
 
 
@@ -119,6 +140,9 @@ DATA_VIEW_INSTANCE = {
     'id': str(uuid.uuid4()),
     'filter_ids': [
         DATA_FILTER_INSTANCE['id']
+    ],
+    'sorter_ids': [
+        DATA_SORTER_INSTANCE['id']
     ],
     'result_id': DATA_VIEW_RESULT['id']
 }

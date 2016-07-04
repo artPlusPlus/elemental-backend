@@ -153,6 +153,52 @@ def deserialize_filter_type(data, filter_type):
     filter_type.attribute_type_ids = attribute_type_ids
 
 
+def serialize_sorter_type(sorter_type):
+    """
+    Extracts data from `sorter_type` into a JSON string.
+
+    Args:
+        sorter_type (SorterType): The ``SorterType`` instance to be serialized.
+
+    Returns:
+        str: Raw JSON string containing `sorter_type` data.
+    """
+    data = {
+        'type': type(sorter_type).__name__,
+        'id': str(sorter_type.id),
+        'name': sorter_type.name,
+        'attribute_type_ids': [str(at_id) for at_id in
+                               sorter_type.attribute_type_ids]
+    }
+
+    data = _json.dumps(data)
+
+    return data
+
+
+def deserialize_sorter_type(data, sorter_type):
+    """
+    Populates `sorter_type` with values extracted from `data`.
+
+    Args:
+        data (str): Raw JSON string containing ``FilterType`` data.
+        sorter_type (SorterType): A ``SorterType`` instance to be populated
+            with `data`.
+
+    Returns:
+        None
+    """
+    data = _json.loads(data)
+
+    id = data['id']
+    name = data['name']
+    attribute_type_ids = data['attribute_type_ids']
+
+    sorter_type.id = id
+    sorter_type.name = name
+    sorter_type.attribute_type_ids = attribute_type_ids
+
+
 def serialize_view_type(view_type):
     """
     Extracts data from `view_type` into a JSON string.
@@ -169,7 +215,8 @@ def serialize_view_type(view_type):
         'name': view_type.name,
         'content_type_ids': [str(ct_id) for ct_id in
                              view_type.content_type_ids],
-        'filter_type_ids': [str(ft_id) for ft_id in view_type.filter_type_ids]
+        'filter_type_ids': [str(ft_id) for ft_id in view_type.filter_type_ids],
+        'sorter_type_ids': [str(st_id) for st_id in view_type.sorter_type_ids]
     }
 
     data = _json.dumps(data)
@@ -195,11 +242,13 @@ def deserialize_view_type(data, view_type):
     name = data['name']
     content_type_ids = data['content_type_ids']
     filter_type_ids = data['filter_type_ids']
+    sorter_type_ids = data['sorter_type_ids']
 
     view_type.id = id
     view_type.name = name
     view_type.content_type_ids = content_type_ids
     view_type.filter_type_ids = filter_type_ids
+    view_type.sorter_type_ids = sorter_type_ids
 
 
 def serialize_content_instance(content_instance):
@@ -349,6 +398,52 @@ def deserialize_filter_instance(data, filter_instance):
     filter_instance.kind_params = kind_params
 
 
+def serialize_sorter_instance(sorter_instance):
+    """
+    Extracts data from `sorter_instance` into a JSON string.
+
+    Args:
+        sorter_instance (SorterInstance): The ``SorterInstance``
+            instance to be serialized.
+
+    Returns:
+        str: Raw JSON string containing `sorter_instance` data.
+    """
+    data = {
+        'type': type(sorter_instance).__name__,
+        'id': str(sorter_instance.id),
+        'type_id': str(sorter_instance.type_id),
+        'kind_params': sorter_instance.kind_params
+    }
+
+    data = _json.dumps(data)
+
+    return data
+
+
+def deserialize_sorter_instance(data, sorter_instance):
+    """
+    Populates `sorter_instance` with values extracted from `data`.
+
+    Args:
+        data (str): Raw JSON string containing ``SorterInstance`` data.
+        filter_instance (SorterInstance): An ``SorterInstance`` instance to be
+            populated with `data`.
+
+    Returns:
+        None
+    """
+    data = _json.loads(data)
+
+    id = data['id']
+    type_id = data['type_id']
+    kind_params = data['kind_params']
+
+    sorter_instance.id = id
+    sorter_instance.type_id = type_id
+    sorter_instance.kind_params = kind_params
+
+
 def serialize_view_instance(view_instance):
     """
     Extracts data from `view_instance` into a JSON string.
@@ -365,6 +460,7 @@ def serialize_view_instance(view_instance):
         'id': str(view_instance.id),
         'type_id': str(view_instance.type_id),
         'filter_ids': [str(f_id) for f_id in view_instance.filter_ids],
+        'sorter_ids': [str(s_id) for s_id in view_instance.sorter_ids],
         'result_id': str(view_instance.result_id)
     }
 
@@ -390,11 +486,13 @@ def deserialize_view_instance(data, view_instance):
     id = data['id']
     type_id = data['type_id']
     filter_ids = data['filter_ids']
+    sorter_ids = data['sorter_ids']
     result_id = data['result_id']
 
     view_instance.id = id
     view_instance.type_id = type_id
     view_instance.filter_ids = filter_ids
+    view_instance.sorter_ids = sorter_ids
     view_instance.result_id = result_id
 
 
@@ -402,17 +500,21 @@ def bind_to_controller(controller):
     controller.serializer('ContentType', 'json')(serialize_content_type)
     controller.serializer('AttributeType', 'json')(serialize_attribute_type)
     controller.serializer('FilterType', 'json')(serialize_filter_type)
+    controller.serializer('SorterType', 'json')(serialize_sorter_type)
     controller.serializer('ViewType', 'json')(serialize_view_type)
     controller.serializer('ContentInstance', 'json')(serialize_content_instance)
     controller.serializer('AttributeInstance', 'json')(serialize_attribute_instance)
     controller.serializer('FilterInstance', 'json')(serialize_filter_instance)
+    controller.serializer('SorterInstance', 'json')(serialize_sorter_instance)
     controller.serializer('ViewInstance', 'json')(serialize_view_instance)
 
     controller.deserializer('ContentType', 'json')(deserialize_content_type)
     controller.deserializer('AttributeType', 'json')(deserialize_attribute_type)
     controller.deserializer('FilterType', 'json')(deserialize_filter_type)
+    controller.deserializer('SorterType', 'json')(deserialize_sorter_type)
     controller.deserializer('ViewType', 'json')(deserialize_view_type)
     controller.deserializer('ContentInstance', 'json')(deserialize_content_instance)
     controller.deserializer('AttributeInstance', 'json')(deserialize_attribute_instance)
     controller.deserializer('FilterInstance', 'json')(deserialize_filter_instance)
+    controller.deserializer('SorterInstance', 'json')(deserialize_sorter_instance)
     controller.deserializer('ViewInstance', 'json')(deserialize_view_instance)

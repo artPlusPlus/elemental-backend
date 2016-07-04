@@ -72,19 +72,51 @@ class ViewType(ResourceType):
     def filter_types(self):
         return self._filter_type_ids
 
+    @property
+    def sorter_type_ids(self):
+        return self._sorter_type_ids
+
+    @sorter_type_ids.setter
+    def sorter_type_ids(self, value):
+        try:
+            value = process_uuids_value(value)
+        except (TypeError, ValueError):
+            msg = (
+                'Failed to set sorter type ids: '
+                'Value contains invalid UUID values - {0}'
+            )
+            msg = msg.format(value)
+            raise ValueError(msg)
+
+        original_value = self._sorter_type_ids
+        if value != original_value:
+            self._sorter_type_ids = value
+            self._sorter_type_ids_changed(self, original_value, value)
+
+    @property
+    def sorter_type_ids_changed(self):
+        return self._sorter_type_ids_changed
+
+    @ResourceReference
+    def sorter_types(self):
+        return self._sorter_type_ids
+
     @ResourceReference
     def content_instances(self):
         return self._id
 
     def __init__(self, id=None, name=None, content_type_ids=None,
-                 filter_type_ids=None):
+                 filter_type_ids=None, sorter_type_ids=None):
         super(ViewType, self).__init__(id=id, name=name)
 
         self._content_type_ids = set()
         self._filter_type_ids = []
+        self._sorter_type_ids = []
 
         self._content_type_ids_changed = PropertyChangedHook()
         self._filter_type_ids_changed = PropertyChangedHook()
+        self._sorter_type_ids_changed = PropertyChangedHook()
 
         self.content_type_ids = content_type_ids
         self.filter_type_ids = filter_type_ids
+        self.sorter_type_ids = sorter_type_ids

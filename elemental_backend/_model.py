@@ -8,6 +8,7 @@ Todo
 import logging
 import weakref
 import collections
+from operator import attrgetter
 
 from elemental_core import NO_VALUE
 from elemental_core.util import process_uuid_value
@@ -32,7 +33,9 @@ from .resources import (
     ViewInstance,
     ViewResult,
     FilterType,
-    FilterInstance
+    FilterInstance,
+    SorterType,
+    SorterInstance
 )
 
 
@@ -64,10 +67,12 @@ class Model(object):
         self._map__resource_cls__resources = weakref.WeakKeyDictionary()
         self._map__resource_type__resource_instances = weakref.WeakKeyDictionary()
         self._map__attribute_type__filter_types = weakref.WeakKeyDictionary()
+        self._map__attribute_type__sorter_types = weakref.WeakKeyDictionary()
         self._map__content_type__view_types = weakref.WeakKeyDictionary()
         self._map__view_type__content_instances = weakref.WeakKeyDictionary()
         self._map__attribute_instance__content_instance = weakref.WeakValueDictionary()
         self._map__filter_instance__view_instance = weakref.WeakKeyDictionary()
+        self._map__sorter_instance__view_instance = weakref.WeakKeyDictionary()
         self._map__view_result__view_instance = weakref.WeakKeyDictionary()
 
         self._map__resource__stale_dependencies = weakref.WeakKeyDictionary()
@@ -85,12 +90,14 @@ class Model(object):
         self._map__resource_cls__registrar[AttributeType] = self._register_attribute_type
         self._map__resource_cls__registrar[ViewType] = self._register_view_type
         self._map__resource_cls__registrar[FilterType] = self._register_filter_type
+        self._map__resource_cls__registrar[SorterType] = self._register_sorter_type
 
         self._map__resource_cls__registrar[ResourceInstance] = self._register_resource_instance
         self._map__resource_cls__registrar[ContentInstance] = self._register_content_instance
         self._map__resource_cls__registrar[AttributeInstance] = self._register_attribute_instance
         self._map__resource_cls__registrar[ViewInstance] = self._register_view_instance
         self._map__resource_cls__registrar[FilterInstance] = self._register_filter_instance
+        self._map__resource_cls__registrar[SorterInstance] = self._register_sorter_instance
 
         self._map__resource_cls__registrar[ViewResult] = self._register_view_result
 
@@ -115,12 +122,14 @@ class Model(object):
         self._map__resource_cls__releaser[AttributeType] = self._release_attribute_type
         self._map__resource_cls__releaser[ViewType] = self._release_view_type
         self._map__resource_cls__releaser[FilterType] = self._release_filter_type
+        self._map__resource_cls__releaser[SorterType] = self._release_sorter_type
 
         self._map__resource_cls__releaser[ResourceInstance] = self._release_resource_instance
         self._map__resource_cls__releaser[ContentInstance] = self._release_content_instance
         self._map__resource_cls__releaser[AttributeInstance] = self._release_attribute_instance
         self._map__resource_cls__releaser[ViewInstance] = self._release_view_instance
         self._map__resource_cls__releaser[FilterInstance] = self._release_filter_instance
+        self._map__resource_cls__releaser[SorterInstance] = self._release_sorter_instance
 
         self._map__resource_cls__releaser[ViewResult] = self._release_view_result
 
@@ -749,6 +758,10 @@ class Model(object):
         resolver = self._resolve_attribute_type_filter_types
         ref.add_resolver(attribute_type, resolver)
 
+        ref = type(attribute_type).sorter_types
+        resolver = self._resolve_attribute_type_sorter_types
+        ref.add_resolver(attribute_type, resolver)
+
     def _release_attribute_type(self, attribute_type):
         map_at_fts = self._map__attribute_type__filter_types
         try:
@@ -851,11 +864,19 @@ class Model(object):
         handler = self._handle_view_type_filter_type_ids_changed
         hook.add_handler(handler)
 
+        hook = view_type.sorter_type_ids_changed
+        handler = self._handle_view_type_sorter_type_ids_changed
+        hook.add_handler(handler)
+
         ref = type(view_type).content_types
         resolver = self._resolve_resources
         ref.add_resolver(view_type, resolver)
 
         ref = type(view_type).filter_types
+        resolver = self._resolve_resources
+        ref.add_resolver(view_type, resolver)
+
+        ref = type(view_type).sorter_types
         resolver = self._resolve_resources
         ref.add_resolver(view_type, resolver)
 
@@ -874,10 +895,17 @@ class Model(object):
         handler = self._handle_view_type_filter_type_ids_changed
         hook.remove_handler(handler)
 
+        hook = view_type.sorter_type_ids_changed
+        handler = self._handle_view_type_sorter_type_ids_changed
+        hook.remove_handler(handler)
+
         ref = type(view_type).content_types
         ref.remove_resolver(view_type)
 
         ref = type(view_type).filter_types
+        ref.remove_resolver(view_type)
+
+        ref = type(view_type).sorter_types
         ref.remove_resolver(view_type)
 
         ref = type(view_type).content_instances
@@ -907,11 +935,19 @@ class Model(object):
         handler = self._handle_view_instance_filter_ids_changed
         hook.add_handler(handler)
 
+        hook = view_instance.sorter_ids_changed
+        handler = self._handle_view_instance_sorter_ids_changed
+        hook.add_handler(handler)
+
         hook = view_instance.result_id_changed
         handler = self._handle_view_instance_result_id_changed
         hook.add_handler(handler)
 
         ref = type(view_instance).filter_instances
+        resolver = self._resolve_resources
+        ref.add_resolver(view_instance, resolver)
+
+        ref = type(view_instance).sorter_instances
         resolver = self._resolve_resources
         ref.add_resolver(view_instance, resolver)
 
@@ -924,11 +960,18 @@ class Model(object):
         handler = self._handle_view_instance_filter_ids_changed
         hook.remove_handler(handler)
 
+        hook = view_instance.sorter_ids_changed
+        handler = self._handle_view_instance_sorter_ids_changed
+        hook.remove_handler(handler)
+
         hook = view_instance.result_id_changed
         handler = self._handle_view_instance_result_id_changed
         hook.remove_handler(handler)
 
         ref = type(view_instance).filter_instances
+        ref.remove_resolver(view_instance)
+
+        ref = type(view_instance).sorter_instances
         ref.remove_resolver(view_instance)
 
         ref = type(view_instance).result
@@ -1037,6 +1080,72 @@ class Model(object):
         ref = type(filter_instance).view_instance
         ref.remove_resolver(filter_instance)
 
+    def _register_sorter_type(self, sorter_type):
+        map_at_sts = self._map__attribute_type__sorter_types
+        for attribute_type_id in sorter_type.attribute_type_ids:
+            try:
+                sorter_types = map_at_sts[attribute_type_id]
+            except KeyError:
+                sorter_types = weakref.WeakSet()
+            sorter_types.add(sorter_type.id)
+
+        # self._update_view_instance_content_instances()
+
+        hook = sorter_type.attribute_type_ids_changed
+        handler = self._handle_sorter_type_attribute_type_ids_changed
+        hook.add_handler(handler)
+
+        ref = type(sorter_type).attribute_types
+        resolver = self._resolve_resources
+        ref.add_resolver(sorter_type, resolver)
+
+    def _release_sorter_type(self, sorter_type):
+        map_at_sts = self._map__attribute_type__sorter_types
+        for attribute_type_id in sorter_type.attribute_type_ids:
+            try:
+                map_at_sts[attribute_type_id].discard(sorter_type.id)
+            except KeyError:
+                pass
+
+        # self._update_view_instance_content_instances()
+
+        hook = sorter_type.attribute_type_ids_changed
+        handler = self._handle_sorter_type_attribute_type_ids_changed
+        hook.remove_handler(handler)
+
+        ref = type(sorter_type).attribute_types
+        ref.remove_resolver(sorter_type)
+
+    def _register_sorter_instance(self, sorter_instance):
+        map_si_vi = self._map__sorter_instance__view_instance
+        self._fix_map_key(map_si_vi, sorter_instance.id)
+
+        # self._update_view_instance_content_instances()
+
+        hook = sorter_instance.kind_params_changed
+        handler = self._handler_sorter_instance_kind_params_changed
+        hook.add_handler(handler)
+
+        ref = type(sorter_instance).view_instance
+        resolver = self._resolve_sorter_instance_view_instance
+        ref.add_resolver(sorter_instance, resolver)
+
+    def _release_sorter_instance(self, sorter_instance):
+        map_si_vi = self._map__sorter_instance__view_instance
+        try:
+            del map_si_vi[sorter_instance.id]
+        except KeyError:
+            pass
+
+        # self._update_view_instance_content_instances()
+
+        hook = sorter_instance.kind_params_changed
+        handler = self._handler_sorter_instance_kind_params_changed
+        hook.remove_handler(handler)
+
+        ref = type(sorter_instance).view_instance
+        ref.remove_resolver(sorter_instance)
+
     def _handle_resource_id_changed(
             self, sender, event_data):
         msg = 'Mutable Ids are not supported.'
@@ -1142,6 +1251,10 @@ class Model(object):
         # for view_inst_id in map_rt_ri[sender.id]:
         #     self._update_view_instance_content_instances(view_inst_id)
 
+    def _handle_view_type_sorter_type_ids_changed(
+            self, sender, event_data):
+        pass
+
     def _handle_view_instance_filter_ids_changed(
             self, sender, event_data):
         original_value, current_value = event_data
@@ -1155,6 +1268,10 @@ class Model(object):
             map_fi_vi[filter_instance_id] = sender.id
 
         # self._update_view_instance_content_instances(sender.id)
+
+    def _handle_view_instance_sorter_ids_changed(
+            self, sender, event_data):
+        pass
 
     def _handle_view_instance_result_id_changed(
             self, sender, event_data):
@@ -1178,7 +1295,7 @@ class Model(object):
             try:
                 filter_type_ids = map_at_fts[attr_type_id]
             except KeyError:
-                pass
+                continue
             else:
                 filter_type_ids.discard(sender.id)
 
@@ -1196,6 +1313,41 @@ class Model(object):
             self, sender, event_data):
         map_fi_vi = self._map__filter_instance__view_instance
         view_inst_id = map_fi_vi[sender.id]
+        # self._update_view_instance_content_instances(view_inst_id)
+
+    def _handle_sorter_type_attribute_type_ids_changed(
+            self, sender, event_data):
+        original_value, current_value = event_data
+
+        added_attr_type_ids = set(current_value).difference(current_value)
+        removed_attr_type_ids = set(original_value).difference(current_value)
+
+        map_at_sts = self._map__attribute_type__sorter_types
+        for attr_type_id in removed_attr_type_ids:
+            try:
+                sorter_type_ids = map_at_sts[attr_type_id]
+            except KeyError:
+                continue
+            else:
+                sorter_type_ids.discard(sender.id)
+
+        for attr_type_id in added_attr_type_ids:
+            sorter_type_ids = map_at_sts.setdefault(attr_type_id,
+                                                    weakref.WeakSet())
+            sorter_type_ids.add(sender.id)
+
+        map_rt_ri = self._map__resource_type__resource_instances
+        map_si_vi = self._map__sorter_instance__view_instance
+        for sorter_inst_id in map_rt_ri[sender.id]:
+            view_inst_id = map_si_vi[sorter_inst_id]
+            # self._update_view_instance_content_instances(view_inst_id)
+
+    def _handler_sorter_instance_kind_params_changed(
+            self, sender, event_data):
+        map_si_vi = self._map__sorter_instance__view_instance
+
+        view_inst_id = map_si_vi[sender.id]
+
         # self._update_view_instance_content_instances(view_inst_id)
 
     def _update_view_type_content_instances(self, view_type_id):
@@ -1219,7 +1371,7 @@ class Model(object):
 
     def _update_view_result_content_instances(
             self, view_result_id, content_instance_ids=None,
-            filter_instance_ids=None):
+            filter_instance_ids=None, sorter_instance_ids=None):
         """
         Computes the ContentInstances referenced by a ViewResult.
 
@@ -1236,6 +1388,18 @@ class Model(object):
             return
 
         view_result_content_instance_ids = view_result.content_instance_ids.copy()
+
+        if not content_instance_ids:
+            map_vt_cis = self._map__view_type__content_instances
+            content_instance_ids = map_vt_cis.get(view_instance.type_id, set())
+
+            # This intersection update accounts for when a ViewType no longer
+            # references a ContentType. The ContentInstance Ids of the discarded
+            # ContentType need to be purged from the ViewResult.
+            view_result_content_instance_ids.intersection_update(
+                content_instance_ids)
+        elif not isinstance(content_instance_ids, collections.Iterable):
+            content_instance_ids = [content_instance_ids]
 
         if filter_instance_ids:
             if isinstance(filter_instance_ids, collections.Iterable):
@@ -1254,57 +1418,144 @@ class Model(object):
         else:
             filter_instances = view_instance.filter_instances
 
-        if not filter_instances:
-            return
-
-        if not content_instance_ids:
-            map_vt_cis = self._map__view_type__content_instances
-            content_instance_ids = map_vt_cis.get(view_instance.type_id, set())
-
-            # This intersection update accounts for when a ViewType no longer
-            # references a ContentType. The ContentInstance Ids of the discarded
-            # ContentType need to be purged from the ViewResult.
-            view_result_content_instance_ids.intersection_update(content_instance_ids)
-        elif not isinstance(content_instance_ids, collections.Iterable):
-            content_instance_ids = [content_instance_ids]
-
-        for content_inst_id in content_instance_ids:
-            try:
-                content_inst = self._resources[content_inst_id]
-            except KeyError:
-                view_result_content_instance_ids.discard(content_inst_id)
-                continue
-
-            if self._apply_filters(content_inst, filter_instances):
-                view_result_content_instance_ids.add(content_inst_id)
+        if sorter_instance_ids:
+            if isinstance(sorter_instance_ids, collections.Iterable):
+                sorter_instances = self._resolve_resources(sorter_instance_ids)
             else:
-                view_result_content_instance_ids.discard(content_inst_id)
+                try:
+                    sorter_instances = self._resources[sorter_instance_ids]
+                except KeyError:
+                    msg = 'Invalid value for sorter_instance_ids: {0}'
+                    msg = msg.format(sorter_instance_ids)
+
+                    _LOG.error(msg)
+                    raise ValueError(msg)
+                else:
+                    sorter_instances = [sorter_instances]
+        else:
+            sorter_instances = view_instance.sorter_instances
+
+        # for content_inst_id in content_instance_ids:
+        #     try:
+        #         content_inst = self._resources[content_inst_id]
+        #     except KeyError:
+        #         view_result_content_instance_ids.discard(content_inst_id)
+        #         continue
+        #
+        #     if self._apply_filters(content_inst, filter_instances):
+        #         view_result_content_instance_ids.add(content_inst_id)
+        #     else:
+        #         view_result_content_instance_ids.discard(content_inst_id)
+
+        adds, discards = self._apply_filters(content_instance_ids,
+                                             filter_instances)
+        view_result_content_instance_ids.difference_update(discards)
+        view_result_content_instance_ids.update(adds)
+
+        view_result_content_instance_ids = self._apply_sorters(
+            view_result_content_instance_ids, sorter_instances)
+
         view_result.content_instance_ids = view_result_content_instance_ids
 
-    def _apply_filters(self, content_instance, filter_instances):
+    def _apply_filters(self, content_instance_ids, filter_instances):
         attr_inst_resolver = self._resolve_content_instance_attribute_instance_from_attribute_type
+        add_content_instance_ids = set()
+        discard_content_instance_ids = set()
 
-        for filter_inst in filter_instances:
-            filter_type = filter_inst.type
-            for attr_type_id in filter_type.attribute_type_ids:
-                attr_inst = attr_inst_resolver(content_instance.id, attr_type_id)
-                if attr_inst:
-                    attr_type = self._resources.get(attr_type_id)
+        for content_inst_id in content_instance_ids:
+            filters = iter(filter_instances)
+            qualifies = True
+            while qualifies:
+                try:
+                    filter_inst = next(filters)
+                except StopIteration:
                     break
+
+                filter_type = filter_inst.type
+                for attr_type_id in filter_type.attribute_type_ids:
+                    attr_inst = attr_inst_resolver(content_inst_id, attr_type_id)
+                    if attr_inst:
+                        attr_type = self._resources.get(attr_type_id)
+                        break
+                else:
+                    attr_inst = None
+                    attr_type = None
+
+                if not all((attr_type, attr_inst)):
+                    qualifies = False
+                    continue
+
+                attr_kind = attr_type.kind
+                attr_value = attr_inst.value
+                filter_params = filter_inst.kind_params
+                if not attr_kind.filter_value(attr_value, **filter_params):
+                    qualifies = False
+                    continue
+
+            if qualifies:
+                add_content_instance_ids.add(content_inst_id)
             else:
-                attr_inst = None
-                attr_type = None
+                discard_content_instance_ids.add(content_inst_id)
 
-            if not all((attr_type, attr_inst)):
-                return False
+        return add_content_instance_ids, discard_content_instance_ids
 
-            attr_kind = attr_type.kind
-            attr_value = attr_inst.value
-            filter_params = filter_inst.kind_params
-            if not attr_kind.filter_value(attr_value, **filter_params):
-                return False
+    # def _apply_filters(self, content_instance, filter_instances):
+    #     attr_inst_resolver = self._resolve_content_instance_attribute_instance_from_attribute_type
+    #
+    #     for filter_inst in filter_instances:
+    #         filter_type = filter_inst.type
+    #         for attr_type_id in filter_type.attribute_type_ids:
+    #             attr_inst = attr_inst_resolver(content_instance.id, attr_type_id)
+    #             if attr_inst:
+    #                 attr_type = self._resources.get(attr_type_id)
+    #                 break
+    #         else:
+    #             attr_inst = None
+    #             attr_type = None
+    #
+    #         if not all((attr_type, attr_inst)):
+    #             return False
+    #
+    #         attr_kind = attr_type.kind
+    #         attr_value = attr_inst.value
+    #         filter_params = filter_inst.kind_params
+    #         if not attr_kind.filter_value(attr_value, **filter_params):
+    #             return False
+    #
+    #     return True
 
-        return True
+    def _apply_sorters(self, content_instance_ids, sorter_instances):
+        attr_inst_resolver = self._resolve_content_instance_attribute_instance_from_attribute_type
+        sorted_content_instance_ids = content_instance_ids.copy()
+
+        # TODO: very naive algorithm, optimize later
+        for sorter_inst in sorter_instances:
+            sorter_type = sorter_inst.type
+            for attr_type_id in sorter_type.attribute_type_ids:
+                attribute_instances = set()
+                for content_instance_id in sorted_content_instance_ids:
+                    attr_inst = attr_inst_resolver(content_instance_id, attr_type_id)
+                    if attr_inst:
+                        attribute_instances.add(attr_inst)
+
+                if not attribute_instances:
+                    continue
+
+                attr_type = self._resources.get(attr_type_id)
+                if not attr_type:
+                    continue
+
+                # attr_kind = attr_type.kind
+                # sorter_params = sorter_inst.kind_params
+                # sorted(attribute_instances, key=attrgetter('value'))
+                # attr_kind.sort(attribute_data, **sorter_params)
+
+                sorted_content_instance_ids = [
+                    attr_inst.content_instance.id for attr_inst
+                    in sorted(attribute_instances, key=attrgetter('value'))
+                ]
+
+        return sorted_content_instance_ids
 
     def _resolve_resource(self, resource_id):
         return self._resources.get(resource_id)
@@ -1319,52 +1570,53 @@ class Model(object):
     def _resolve_resource_type_resource_instances(self, resource_type_id):
         map_rt_ris = self._map__resource_type__resource_instances
 
-        resource_instance_ids = map_rt_ris.get(resource_type_id, tuple())
-        result = self._resolve_resources(resource_instance_ids)
+        result = map_rt_ris.get(resource_type_id, tuple())
+        if result:
+            result = self._resolve_resources(result)
 
         return result
 
     def _resolve_content_type_view_types(self, content_type_id):
         map_ct_vts = self._map__content_type__view_types
 
-        view_type_ids = map_ct_vts.get(content_type_id)
-        if view_type_ids:
-            result = self._resolve_resources(view_type_ids)
-        else:
-            result = tuple()
+        result = map_ct_vts.get(content_type_id, tuple())
+        if result:
+            result = self._resolve_resources(result)
 
         return result
 
     def _resolve_view_type_content_instances(self, view_type_id):
         map_vt_cis = self._map__view_type__content_instances
 
-        content_instance_ids = map_vt_cis.get(view_type_id)
-        if content_instance_ids:
-            result = self._resolve_resources(content_instance_ids)
-        else:
-            result = tuple()
+        result = map_vt_cis.get(view_type_id, tuple())
+        if result:
+            result = self._resolve_resources(result)
 
         return result
 
     def _resolve_attribute_type_filter_types(self, attribute_type_id):
         map_at_fts = self._map__attribute_type__filter_types
 
-        filter_type_ids = map_at_fts.get(attribute_type_id)
-        if filter_type_ids:
-            result = self._resolve_resources(filter_type_ids)
-        else:
-            result = tuple()
+        result = map_at_fts.get(attribute_type_id, tuple())
+        if result:
+            result = self._resolve_resources(result)
+
+        return result
+
+    def _resolve_attribute_type_sorter_types(self, attribute_type_id):
+        map_at_sts = self._map__attribute_type__sorter_types
+
+        result = map_at_sts.get(attribute_type_id, tuple())
+        if result:
+            result = self._resolve_resources(result)
 
         return result
 
     def _resolve_attribute_instance_content_instance(self, attribute_instance_id):
         map_ai_ci = self._map__attribute_instance__content_instance
 
-        try:
-            result = map_ai_ci[attribute_instance_id]
-        except KeyError:
-            result = None
-        else:
+        result = map_ai_ci.get(attribute_instance_id)
+        if result:
             result = self._resources.get(result)
 
         return result
@@ -1372,11 +1624,17 @@ class Model(object):
     def _resolve_filter_instance_view_instance(self, filter_instance_id):
         map_fi_vi = self._map__filter_instance__view_instance
 
-        try:
-            result = map_fi_vi[filter_instance_id]
-        except KeyError:
-            result = None
-        else:
+        result = map_fi_vi.get(filter_instance_id)
+        if result:
+            result = self._resources.get(result)
+
+        return result
+
+    def _resolve_sorter_instance_view_instance(self, sorter_instance_id):
+        map_si_vi = self._map__sorter_instance__view_instance
+
+        result = map_si_vi.get(sorter_instance_id)
+        if result:
             result = self._resources.get(result)
 
         return result
@@ -1406,11 +1664,8 @@ class Model(object):
     def _resolve_view_result_view_instance(self, view_result_id):
         map_vr_vi = self._map__view_result__view_instance
 
-        try:
-            result = map_vr_vi[view_result_id]
-        except KeyError:
-            result = None
-        else:
+        result = map_vr_vi.get(view_result_id)
+        if result:
             result = self._resources.get(result)
 
         return result
