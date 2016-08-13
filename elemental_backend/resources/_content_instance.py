@@ -1,34 +1,14 @@
-from elemental_core.util import process_uuid_value, process_uuids_value
+from elemental_core.util import process_uuids_value
 
-from ._resource import Resource
+from ._resource_instance import ResourceInstance
+from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
-class ContentInstance(Resource):
+class ContentInstance(ResourceInstance):
     """
     Represents a unique collection of `AttributeInstances`.
     """
-    @property
-    def type_id(self):
-        """
-        uuid: An Id resolving to an `ContentType` Resource.
-        """
-        return self._type_id
-
-    @type_id.setter
-    def type_id(self, value):
-        try:
-            value = process_uuid_value(value)
-        except ValueError:
-            msg = 'Failed to set type id: "{0}" is not a valid UUID.'
-            msg = msg.format(value)
-            raise ValueError(msg)
-
-        if value == self._type_id:
-            return
-
-        self._type_id = value
-        # TODO: ContentInstance.type_id changed event
-
     @property
     def attribute_ids(self):
         """
@@ -45,11 +25,18 @@ class ContentInstance(Resource):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        if value == self._attribute_ids:
-            return
+        original_value = self._attribute_ids
+        if value != original_value:
+            self._attribute_ids = value
+            self._attribute_ids_changed(self, original_value, value)
 
-        self._attribute_ids = value
-        # TODO: ContentInstance.attribute_ids changed event
+    @property
+    def attribute_ids_changed(self):
+        return self._attribute_ids_changed
+
+    @ResourceReference
+    def attributes(self):
+        return self._attribute_ids
 
     def __init__(self, id=None, type_id=None, attribute_ids=None):
         """
@@ -61,10 +48,10 @@ class ContentInstance(Resource):
             attribute_ids (List[str or uuid]): A sequence of valid
                 `AttributeInstances` Ids.
         """
-        super(ContentInstance, self).__init__(id=id)
+        super(ContentInstance, self).__init__(id=id, type_id=type_id)
 
-        self._type_id = None
         self._attribute_ids = None
 
-        self.type_id = type_id
+        self._attribute_ids_changed = PropertyChangedHook()
+
         self.attribute_ids = attribute_ids

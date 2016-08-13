@@ -1,8 +1,9 @@
-import pytest
-
 import uuid
 
+import pytest
+
 import elemental_backend as backend
+import elemental_core as core
 
 
 _attribute_instance_id = uuid.uuid4()
@@ -23,6 +24,7 @@ class _InstantiationParams(object):
     ]
 
     value = [
+        (core.NO_VALUE, core.NO_VALUE),
         (None, None),
         ('string_value', 'string_value'),
         (4, 4),

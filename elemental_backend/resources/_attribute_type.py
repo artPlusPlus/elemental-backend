@@ -2,35 +2,17 @@ from elemental_core import NO_VALUE
 from elemental_core.util import process_elemental_class_value
 import elemental_kinds  # Not directly used, allows classes to be resolved later
 
-from ._resource import Resource
+from ._resource_type import ResourceType
+from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
-class AttributeType(Resource):
+class AttributeType(ResourceType):
     """
     Represents a definition for `AttributeInstances`.
 
     `AttributeTypes` are referenced by `ContentTypes`.
     """
-    @property
-    def name(self):
-        """
-        str: Label identifying the intention of the `AttributeType's` data.
-        """
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        if not value:
-            value = None
-        else:
-            value = str(value)
-
-        if value == self._name:
-            return
-
-        self._name = value
-        # TODO: AttributeType.name changed event
-
     @property
     def default_value(self):
         """
@@ -40,11 +22,14 @@ class AttributeType(Resource):
 
     @default_value.setter
     def default_value(self, value):
-        if value == self._default_value:
-            return
+        original_value = self._default_value
+        if value != original_value:
+            self._default_value = value
+            self._default_value_changed(self, original_value, value)
 
-        self._default_value = value
-        # TODO: AttributeType.default_value changed event
+    @property
+    def default_value_changed(self):
+        return self._default_value_changed
 
     @property
     def kind_id(self):
@@ -55,11 +40,14 @@ class AttributeType(Resource):
 
     @kind_id.setter
     def kind_id(self, value):
-        if value == self._kind_id:
-            return
+        original_value = self._kind_id
+        if value != original_value:
+            self._kind_id = value
+            self._kind_id_changed(self, original_value, value)
 
-        self._kind_id = value
-        # TODO: AttributeType.kind_id changed event
+    @property
+    def kind_id_changed(self):
+        return self._kind_id_changed
 
     @property
     def kind_properties(self):
@@ -80,11 +68,14 @@ class AttributeType(Resource):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        if value == self._kind_properties:
-            return
+        original_value = self._kind_properties
+        if value != original_value:
+            self._kind_properties = value
+            self._kind_properties_changed(self, original_value, value)
 
-        self._kind_properties = value
-        # TODO: AttributeType.kind_properties changed event
+    @property
+    def kind_properties_changed(self):
+        return self._kind_properties_changed
 
     @property
     def kind(self):
@@ -92,6 +83,20 @@ class AttributeType(Resource):
             return None
 
         return process_elemental_class_value(self.kind_id)
+
+    @ResourceReference
+    def filter_types(self):
+        """
+        List of `FilterType`s that reference this `AttributeType`.
+        """
+        return self._id
+
+    @ResourceReference
+    def sorter_types(self):
+        """
+        List of `SorterType`s that reference this `AttributeType`.
+        """
+        return self._id
 
     def __init__(self, id=None, name=None, default_value=NO_VALUE,
                  kind_id=None, kind_properties=None):
@@ -107,14 +112,16 @@ class AttributeType(Resource):
             kind_id (str): Identifier resolving to a valid `AttributeKind`.
             kind_properties (Dict[str:str]): Data used by the `AttributeKind`.
         """
-        super(AttributeType, self).__init__(id=id)
+        super(AttributeType, self).__init__(id=id, name=name)
 
-        self._name = None
         self._default_value = None
         self._kind_id = None
         self._kind_properties = None
 
-        self.name = name
+        self._default_value_changed = PropertyChangedHook()
+        self._kind_id_changed = PropertyChangedHook()
+        self._kind_properties_changed = PropertyChangedHook()
+
         self.default_value = default_value
         self.kind_id = kind_id
         self.kind_properties = kind_properties or dict()

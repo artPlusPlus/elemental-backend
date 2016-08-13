@@ -69,49 +69,156 @@ def process_handler_key(event, action, resource_type):
     return None
 
 
-def _resolve_attr_type(attr_inst_proxy, model_resources_proxy):
-    """
-    Used internally to allow AttributeInstances to resolve their AttributeType.
+# def resolve_resource_type(resource_inst_proxy, model_resources_proxy):
+#     """
+#     Used internally to allow `ResourceInstances` to resolve their `ResourceType`.
+#
+#     Args:
+#         resource_inst_proxy (weakref.proxy): proxy to a ResourceInstance object.
+#         model_resources_proxy (weakref.proxy): proxy to the _resources map of
+#             a Model instance.
+#
+#     Returns:
+#         `ResourceType` instance if proxies are alive and a `ResourceType`
+#         instance with an id matching the value of the `ResourceInstance`
+#         object's `type_id` has been registered with the same `Model` instance.
+#     """
+#     result = None
+#
+#     if not resource_inst_proxy:
+#         msg = (
+#             'Failed to resolve ResourceType: '
+#             'AttributeInstance reference is dead.'
+#         )
+#         _LOG.warn(msg)
+#
+#         return result
+#
+#     if not model_resources_proxy:
+#         msg = (
+#             'Failed to resolve ResourceType: '
+#             'Model._resources reference is dead.'
+#         )
+#         _LOG.warn(msg)
+#
+#         return result
+#
+#     type_id = resource_inst_proxy.type_id
+#     result = model_resources_proxy.get(type_id)
+#
+#     if result:
+#         msg = 'Resolved ResourceType: "{0}"'
+#         msg = msg.format(result)
+#     else:
+#         msg = 'Failed to resolve ResourceType "{0}"'
+#         msg = msg.format(type_id)
+#     _LOG.debug(msg)
+#
+#     return result
 
-    Args:
-        attr_inst_proxy (weakref.proxy): proxy to an AttributeInstance
-            instance.
-        model_resources_proxy (weakref.proxy): proxy to the _resources map of
-            a Model instance.
 
-    Returns:
-        `AttributeType` instance if proxies are alive and an `AttributeType`
-        instance with an id matching the value of the AttributeInstance
-        instance's `type_id` has been registered within the same `Model`
-        instance.
-    """
-    result = None
+# def resolve_view_instance_content_instances(
+#         view_inst_proxy, model_map__view_instance__content_instances_proxy):
+#     """
+#     Used internally to allow a `ViewInstance` to resolve its `ContentInstance` collection.
+#
+#     Args:
+#         view_inst_proxy (weakref.proxy): proxy to a ``ViewInstance`` instance.
+#         model_map__view_instance__content_instances_proxy (weakref.proxy): proxy
+#             to the `_map__view_instance__content_instances` map of a Model
+#             instance.
+#
+#     Returns:
+#         `uuid` collection if proxies are alive and an `
+#     """
+#     result = None
+#
+#     if not view_inst_proxy:
+#         msg = (
+#             'Failed to resolve ContentInstances: '
+#             'ViewInstance reference is dead.'
+#         )
+#         _LOG.warn(msg)
+#
+#         return result
+#
+#     if not model_map__view_instance__content_instances_proxy:
+#         msg = (
+#             'Failed to resolve ContentInstances: '
+#             'ViewInstance: ContentInstances map reference is dead.'
+#         )
+#         _LOG.warn(msg)
+#
+#         return result
+#
+#     view_inst_id = view_inst_proxy.id
+#     map_vi_cis = model_map__view_instance__content_instances_proxy
+#     try:
+#         result = map_vi_cis[view_inst_id]
+#     except KeyError:
+#         pass
+#     else:
+#         result = result.copy()
+#
+#     if result:
+#         msg = 'Resolved ContentInstances'
+#     else:
+#         msg = 'Failed to resolve ContentInstances'
+#     _LOG.debug(msg)
+#
+#     return result
 
-    if not attr_inst_proxy:
-        msg = (
-            'Failed to resolve AttributeType: '
-            'AttributeInstance reference is dead.'
-        )
-        _LOG.warn(msg)
-    elif not model_resources_proxy:
-        msg = (
-            'Failed to resolve AttributeType: '
-            'Model._resources reference is dead.'
-        )
-        _LOG.warn(msg)
-    else:
-        type_id = attr_inst_proxy.type_id
-        result = model_resources_proxy.get(type_id)
 
-        if result:
-            msg = 'Resolved AttributeType: "{0}"'
-            msg = msg.format(result)
-        else:
-            msg = 'Failed to resolve AttributeType "{0}"'
-            msg = msg.format(type_id)
-        _LOG.debug(msg)
-
-    return result
+# def resolve_attribute_instance_source(
+#         target_attribute_instance_proxy, model_resources_proxy):
+#     """
+#     Used internally to allow an `AttributeInstance` to resolve a source
+#         `AttributeInstance`.
+#
+#     Args:
+#         target_attribute_instance_proxy (weakref.proxy): proxy to an
+#             `AttributeInstance` that pulls its value from another
+#             `AttributeInstance`.
+#         model_resources_proxy: proxy to a mapping of all resources
+#             managed by a `Model`.
+#
+#     Returns:
+#         None if `target_attribute_instance` has no value for a `source_id` or
+#         a weakref.proxy referencing an `AttributeInstance`.
+#     """
+#     result = None
+#
+#     if not target_attribute_instance_proxy:
+#         msg = (
+#             'Failed to resolve AttributeInstance source: '
+#             'target AttributeInstance reference is dead.'
+#         )
+#         _LOG.warn(msg)
+#
+#         return result
+#
+#     if not model_resources_proxy:
+#         msg = (
+#             'Failed to AttributeInstance source: '
+#             'Model._resources reference is dead.'
+#         )
+#         _LOG.warn(msg)
+#
+#         return result
+#
+#     source_id = target_attribute_instance_proxy.source_id
+#     if source_id:
+#         result = model_resources_proxy.get(source_id)
+#
+#         if result:
+#             msg = 'Resolved AttributeInstance source: "{0}"'
+#             msg = msg.format(result)
+#         else:
+#             msg = 'Failed to resolve AttributeInstance "{0}"'
+#             msg = msg.format(source_id)
+#         _LOG.debug(msg)
+#
+#     return result
 
 
 class _Dict(dict):

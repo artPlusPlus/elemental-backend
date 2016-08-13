@@ -50,7 +50,7 @@ DATA_ATTR_INST_NAME = {
     'type_id': DATA_ATTR_TYPE_NAME['id'],
     'source_id': None,
     'id': str(uuid.uuid4()),
-    'value': 'MyAsset'
+    'value': 'MyFoo'
 }
 
 
@@ -68,7 +68,81 @@ DATA_CONTENT_INST = {
     'type_id': DATA_CONTENT_TYPE_SUB['id'],
     'id': str(uuid.uuid4()),
     'attribute_ids': [
-        str(DATA_ATTR_INST_NAME['id']),
-        str(DATA_ATTR_INST_PATH['id'])
+        DATA_ATTR_INST_NAME['id'],
+        DATA_ATTR_INST_PATH['id']
     ]
+}
+
+
+DATA_FILTER_TYPE = {
+    'type': 'FilterType',
+    'id': str(uuid.uuid4()),
+    'name': 'NameFilter',
+    'attribute_type_ids': [
+        DATA_ATTR_TYPE_NAME['id']
+    ]
+}
+
+
+DATA_FILTER_INSTANCE = {
+    'type': 'FilterInstance',
+    'type_id': DATA_FILTER_TYPE['id'],
+    'id': str(uuid.uuid4()),
+    'kind_params': {
+        'match': '.*Foo.*'
+    }
+}
+
+
+DATA_SORTER_TYPE = {
+    'type': 'SorterType',
+    'id': str(uuid.uuid4()),
+    'name': 'NameSorter',
+    'attribute_type_ids': [
+        DATA_ATTR_TYPE_NAME['id']
+    ]
+}
+
+
+DATA_SORTER_INSTANCE = {
+    'type': 'SorterInstance',
+    'type_id': DATA_SORTER_TYPE['id'],
+    'id': str(uuid.uuid4()),
+    'kind_params': {}
+}
+
+
+DATA_VIEW_TYPE = {
+    'type': 'ViewType',
+    'id': str(uuid.uuid4()),
+    'name': 'SubContentInstances',
+    'content_type_ids': [
+        DATA_CONTENT_TYPE_SUB['id']
+    ],
+    'filter_type_ids': [
+        DATA_FILTER_TYPE['id']
+    ],
+    'sorter_type_ids': [
+        DATA_SORTER_TYPE['id']
+    ]
+}
+
+
+DATA_VIEW_RESULT = {
+    'type': 'ViewResult',
+    'id': str(uuid.uuid4())
+}
+
+
+DATA_VIEW_INSTANCE = {
+    'type': 'ViewInstance',
+    'type_id': DATA_VIEW_TYPE['id'],
+    'id': str(uuid.uuid4()),
+    'filter_ids': [
+        DATA_FILTER_INSTANCE['id']
+    ],
+    'sorter_ids': [
+        DATA_SORTER_INSTANCE['id']
+    ],
+    'result_id': DATA_VIEW_RESULT['id']
 }

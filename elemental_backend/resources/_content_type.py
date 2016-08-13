@@ -1,34 +1,16 @@
 from elemental_core.util import process_uuids_value
 
-from ._resource import Resource
+from ._resource_type import ResourceType
+from ._property_changed_hook import PropertyChangedHook
+from ._resource_reference import ResourceReference
 
 
-class ContentType(Resource):
+class ContentType(ResourceType):
     """
     Represents a collection of `AttributeTypes`.
 
     A `ContentType` can inherit from other `ContentTypes`.
     """
-    @property
-    def name(self):
-        """
-        str: Label identifying the intention of the `AttributeType's` data.
-        """
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        if not value:
-            value = None
-        else:
-            value = str(value)
-
-        if value == self._name:
-            return
-
-        self._name = value
-        # TODO: ContentType.name changed event
-
     @property
     def base_ids(self):
         """
@@ -53,11 +35,21 @@ class ContentType(Resource):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        if value == self._base_ids:
-            return
-
         self._base_ids = value
-        # TODO: ContentType.base_ids changed event
+
+        original_value = self._base_ids
+        if value != original_value:
+            self._base_ids = value
+            self._base_ids_changed(self, original_value, value)
+
+    @property
+    def base_ids_changed(self):
+        return self._base_ids_changed
+
+    @base_ids_changed.setter
+    def base_ids_changed(self, value):
+        if value is not self._base_ids_changed:
+            raise TypeError('base_ids_changed cannot be set')
 
     @property
     def attribute_type_ids(self):
@@ -78,11 +70,22 @@ class ContentType(Resource):
             msg = msg.format(value)
             raise ValueError(msg)
 
-        if value == self._attribute_type_ids:
-            return
+        original_value = self._attribute_type_ids
+        if value != original_value:
+            self._attribute_type_ids = value
+            self._attribute_type_ids_changed(self, original_value, value)
 
-        self._attribute_type_ids = value
-        # TODO: ContentType.attribute_type_ids changed event
+    @property
+    def attribute_type_ids_changed(self):
+        return self._attribute_type_ids_changed
+
+    @ResourceReference
+    def attribute_types(self):
+        return self._attribute_type_ids
+
+    @ResourceReference
+    def view_types(self):
+        return self._id
 
     def __init__(self, id=None, name=None, base_ids=None,
                  attribute_type_ids=None):
@@ -98,12 +101,13 @@ class ContentType(Resource):
             attribute_type_ids (str or List[str]): Ids resolving to valid
                 `AttributeType` instances.
         """
-        super(ContentType, self).__init__(id=id)
+        super(ContentType, self).__init__(id=id, name=name)
 
-        self._name = None
         self._base_ids = None
         self._attribute_type_ids = None
 
-        self.name = name
+        self._base_ids_changed = PropertyChangedHook()
+        self._attribute_type_ids_changed = PropertyChangedHook()
+
         self.base_ids = base_ids
         self.attribute_type_ids = attribute_type_ids

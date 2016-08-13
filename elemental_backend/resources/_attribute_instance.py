@@ -1,45 +1,23 @@
 import logging
-import weakref
-from functools import partial
 
 from elemental_core import NO_VALUE
 from elemental_core.util import process_uuid_value
 
-from ._resource import Resource
+from ._resource_instance import ResourceInstance
+from ._resource_reference import ResourceReference
+from ._property_changed_hook import PropertyChangedHook
 
 
 _LOG = logging.getLogger(__name__)
 
 
-class AttributeInstance(Resource):
+class AttributeInstance(ResourceInstance):
     """
     Represents an instance of an `AttributeType`.
 
     An AttributeInstance holds value data for an AttributeType relative to
     a ContentInstance.
     """
-    @property
-    def type_id(self):
-        """
-        uuid: An Id resolving to an `AttributeType` Resource.
-        """
-        return self._type_id
-
-    @type_id.setter
-    def type_id(self, value):
-        try:
-            value = process_uuid_value(value)
-        except ValueError:
-            msg = 'Failed to set type id: "{0}" is not a valid UUID.'
-            msg = msg.format(value)
-            raise ValueError(msg)
-
-        if value == self._type_id:
-            return
-
-        self._type_id = value
-        # TODO: AttributeInstance.type_id changed event
-
     @property
     def value(self):
         """
@@ -62,11 +40,14 @@ class AttributeInstance(Resource):
             - Perhaps some sort of flag could be implemented to enable/disable
             setting of data when the `AttributeKind` cannot be resolved.
         """
-        return self._value
+        try:
+            return self.source.value
+        except AttributeError:
+            return self._value
 
     @value.setter
     def value(self, value):
-        attr_type = self.attribute_type
+        attr_type = self.type
 
         if attr_type:
             kind = attr_type.kind
@@ -89,11 +70,14 @@ class AttributeInstance(Resource):
             msg = msg.format(self.id, self.type_id)
             _LOG.debug(msg)
 
-        if value == self._value:
-            return
+        original_value = self._value
+        if value != original_value:
+            self._value = value
+            self._value_changed(self, original_value, value)
 
-        self._value = value
-        # TODO: AttributeInstance.value changed event
+    @property
+    def value_changed(self):
+        return self._value_changed
 
     @property
     def source_id(self):
@@ -117,40 +101,28 @@ class AttributeInstance(Resource):
         if value == self._source_id:
             return
 
+        original_value = self._source_id
         self._source_id = value
-        # TODO: AttributeInstance.source_id changed event
+        self._source_id_changed(self, original_value, self._source_id)
 
     @property
-    def attribute_type(self):
+    def source_id_changed(self):
+        return self._source_id_changed
+
+    @ResourceReference
+    def source(self):
         """
-        `AttributeType` instance from which this `AttributeInstance` is "derived".
-
-        Warnings:
-            Care should be taken when setting this value. `Model` instances
-            use it to provide a callback which will resolve a registered
-            `AttributeType` instance when this property is hit. Changes to this
-            value are not persisted back to any `Model` instances.
-
-        See Also:
-            `AttributeInstance.value`
+        `AttributeInstance` object from which this `AttributeInstance` pulls
+            its value.
         """
-        result = self._attribute_type or None
-        if result and isinstance(result, weakref.ref):
-            result = result()
-        if result and not isinstance(result, Resource) and callable(result):
-            result = result()
-        return result
+        return self._source_id
 
-    @attribute_type.setter
-    def attribute_type(self, value):
-        if not isinstance(value, partial):
-            try:
-                value = weakref.ref(value)
-            except TypeError:
-                value = value
-
-        if value != self._attribute_type:
-            self._attribute_type = value
+    @ResourceReference
+    def content_instance(self):
+        """
+        `ContentInstance` object that uses this `AttributeInstance`.
+        """
+        return self._id
 
     def __init__(self, id=None, type_id=None, value=NO_VALUE, source_id=None):
         """
@@ -163,13 +135,15 @@ class AttributeInstance(Resource):
             source_id (str or uuid): A valid id for an `AttributeInstance`
                 instance from which this instance's value should be pulled.
         """
-        super(AttributeInstance, self).__init__(id=id)
+        super(AttributeInstance, self).__init__(id=id, type_id=type_id)
 
-        self._type_id = None
         self._value = None
         self._source_id = None
-        self._attribute_type = None
+        self._source = None
+        self._content_instance = None
 
-        self.type_id = type_id
+        self._value_changed = PropertyChangedHook()
+        self._source_id_changed = PropertyChangedHook()
+
         self.value = value
         self.source_id = source_id
