@@ -1435,18 +1435,6 @@ class Model(object):
         else:
             sorter_instances = view_instance.sorter_instances
 
-        # for content_inst_id in content_instance_ids:
-        #     try:
-        #         content_inst = self._resources[content_inst_id]
-        #     except KeyError:
-        #         view_result_content_instance_ids.discard(content_inst_id)
-        #         continue
-        #
-        #     if self._apply_filters(content_inst, filter_instances):
-        #         view_result_content_instance_ids.add(content_inst_id)
-        #     else:
-        #         view_result_content_instance_ids.discard(content_inst_id)
-
         adds, discards = self._apply_filters(content_instance_ids,
                                              filter_instances)
         view_result_content_instance_ids.difference_update(discards)
@@ -1499,31 +1487,6 @@ class Model(object):
 
         return add_content_instance_ids, discard_content_instance_ids
 
-    # def _apply_filters(self, content_instance, filter_instances):
-    #     attr_inst_resolver = self._resolve_content_instance_attribute_instance_from_attribute_type
-    #
-    #     for filter_inst in filter_instances:
-    #         filter_type = filter_inst.type
-    #         for attr_type_id in filter_type.attribute_type_ids:
-    #             attr_inst = attr_inst_resolver(content_instance.id, attr_type_id)
-    #             if attr_inst:
-    #                 attr_type = self._resources.get(attr_type_id)
-    #                 break
-    #         else:
-    #             attr_inst = None
-    #             attr_type = None
-    #
-    #         if not all((attr_type, attr_inst)):
-    #             return False
-    #
-    #         attr_kind = attr_type.kind
-    #         attr_value = attr_inst.value
-    #         filter_params = filter_inst.kind_params
-    #         if not attr_kind.filter_value(attr_value, **filter_params):
-    #             return False
-    #
-    #     return True
-
     def _apply_sorters(self, content_instance_ids, sorter_instances):
         attr_inst_resolver = self._resolve_content_instance_attribute_instance_from_attribute_type
         sorted_content_instance_ids = content_instance_ids.copy()
@@ -1545,14 +1508,12 @@ class Model(object):
                 if not attr_type:
                     continue
 
-                # attr_kind = attr_type.kind
-                # sorter_params = sorter_inst.kind_params
-                # sorted(attribute_instances, key=attrgetter('value'))
-                # attr_kind.sort(attribute_data, **sorter_params)
-
+                attr_kind = attr_type.kind
+                sorter_params = sorter_inst.kind_params
                 sorted_content_instance_ids = [
                     attr_inst.content_instance.id for attr_inst
-                    in sorted(attribute_instances, key=attrgetter('value'))
+                    in attr_kind.sort_values(attribute_instances,
+                                             **sorter_params)
                 ]
 
         return sorted_content_instance_ids
