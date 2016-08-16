@@ -1,6 +1,6 @@
 from elemental_core import NO_VALUE
 
-from elemental_backend.resources import ResourceInstance
+from ._resource_instance import ResourceInstance
 
 from ._field_dirtied_hook import FieldDirtiedHook
 from ._field_history import FieldHistory
