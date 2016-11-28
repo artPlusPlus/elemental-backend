@@ -28,7 +28,7 @@ class FieldHistory(object):
         self._cursor = -1
         self._values = []
 
-    def append(self, value):
+    def push(self, value):
         if self._cursor != -1:
             self._values = self._values[:self._cursor]
         self._values.append(value)

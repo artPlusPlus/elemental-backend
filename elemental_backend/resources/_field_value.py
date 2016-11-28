@@ -1,13 +1,14 @@
 import time
 
-from elemental_backend.resources._hook import Hook
+from elemental_core import NO_VALUE
+
+from ._hook import Hook
 
 
 class FieldValue(object):
     @property
     def value(self):
-        self._is_dirty = False
-        return self._value
+        raise NotImplementedError()
 
     @property
     def is_dirty(self):
@@ -17,10 +18,9 @@ class FieldValue(object):
     def was_dirtied(self):
         return self._was_dirtied
 
-    def __init__(self, value):
-        self._value = value
+    def __init__(self):
         self._timestamp = time.clock()
-
+        self._value = NO_VALUE
         self._is_dirty = True
         self._was_dirtied = Hook()
 

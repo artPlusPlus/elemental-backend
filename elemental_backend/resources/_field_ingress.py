@@ -1,7 +1,4 @@
-import logging
 import weakref
-
-from elemental_core import NO_VALUE
 
 from ._field_value import FieldValue
 
@@ -16,7 +13,7 @@ class FieldIngress(FieldValue):
         return self._value
 
     def __init__(self, source_field, source_session_key):
-        super(FieldIngress, self).__init__(NO_VALUE)
+        super(FieldIngress, self).__init__()
 
         try:
             self._source_field = weakref.proxy(source_field)
