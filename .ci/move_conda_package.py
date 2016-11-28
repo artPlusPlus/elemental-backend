@@ -6,7 +6,12 @@ import os
 import yaml
 import glob
 import shutil
-from conda_build.config import config
+
+try:
+    from conda_build.config import config
+except ImportError:
+    from conda_build.config import Config
+    config = Config()
 
 
 def _main(recipe_dir):

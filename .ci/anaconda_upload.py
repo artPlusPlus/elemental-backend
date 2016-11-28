@@ -17,7 +17,7 @@ def _main(*labels):
         raise RuntimeError('Upload Failed: No packages found.')
 
     cmd = [
-        'binstar',
+        'anaconda',
         '-t', token,
         'upload',
         '--label', ' '.join(labels),
