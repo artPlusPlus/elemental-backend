@@ -1,0 +1,9 @@
+include LICENSE README.md
+
+graft tests
+graft docs
+
+global-exclude *.py[co]
+
+prune tests/.cache
+prune docs/build

@@ -78,9 +78,18 @@ logs/
 envs/
 scratch/
 tests/.cache/
+.pypirc
 
 
 # =========================
 # Doc Files
 # =========================
 docs/build/
+
+
+# =========================
+# Build Files
+# =========================
+build/
+dist/
+*.egg-info/

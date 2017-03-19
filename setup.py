@@ -1,105 +1,89 @@
 """
 A data layer for the Elemental CMS.
 """
-
+import io
 import os
 import sys
-from setuptools import setup
+
+from setuptools import setup, find_packages
+
+import elemental_backend
 
 
-HERE = os.path.abspath(os.path.dirname(__file__))
+ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
 
 
-with open(os.path.join(HERE, 'README.md'), 'r') as f:
-    __long_description__ = f.read()
+name = elemental_backend.__title__
+version = elemental_backend.__version__
 
-__on_rtd__ = os.environ.get('READTHEDOCS', None) == 'True'
+description = elemental_backend.__summary__
+long_description = io.open('README.md', 'r', encoding='utf-8').read()
+license = elemental_backend.__license__
+url = elemental_backend.__url__
 
-__project__ = 'elemental-backend'
+author = elemental_backend.__author__
+author_email = elemental_backend.__email__
 
-__version__ = '0.3'
-
-__release__ = '0.3.1dev0'
-
-__classifiers__ = [
+classifiers = [
     'Development Status :: 1 - Planning',
-    'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
+    'License :: OSI Approved :: {0}'.format(license),
     'Intended Audience :: Developers',
     'Environment :: Web Environment'
     'Programming Language :: Python',
     'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
     'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     'Topic :: Software Development :: Libraries :: Python Modules'
 ]
+keywords = 'elemental cms backend'
 
-__author__ = 'Matt Robinson'
+packages = find_packages(exclude=('tests', 'docs', 'scratch'))
 
-__author_email__ = 'matt@technicalartisan.com'
-
-__url__ = 'https://github.com/artPlusPlus/elemental-backend'
-
-__license__ = [
-    c.rsplit('::', 1)[1].strip()
-    for c in __classifiers__
-    if c.startswith('License ::')
-][0]
-
-__keywords__ = [
-    'elemental',
-    'cms',
-    'backend'
-]
-
-__packages__ = [
-    'elemental_backend',
-    'elemental_backend.resources',
-    'elemental_backend.serialization',
-    'elemental_backend.transactions'
-]
-
-__platforms__ = 'ALL'
-
-__requires__ = []
-
-__test_suite__ = 'tests'
-
-__tests_require__ = [
-    'pytest'
-]
-
-__extra_requires__ = {
-    'doc': ['sphinx>=1.3.0']
+install_requires = []
+extras_require = {
+    'test': [
+        'pytest'
+    ],
+    'doc': [
+        'sphinx>=1.3.0'
+    ]
 }
 
-__entry_points__ = {}
+package_data = {}
+
+data_files = []
+
+entry_points = {}
 
 
-def main():
-    if sys.version_info <= (3, 5) and not __on_rtd__:
+def _run_setup():
+    if sys.version_info <= (3, 5) and not ON_RTD:
         msg = 'This package requires Python 3.5 or above (current {0}.{1})'
         msg = msg.format(sys.version_info[0], sys.version_info[1])
         raise ValueError(msg)
 
-    setup(
-        name                = __project__,
-        version             = __version__,
-        description         = __doc__,
-        long_description    = __long_description__,
-        classifiers         = __classifiers__,
-        author              = __author__,
-        author_email        = __author_email__,
-        url                 = __url__,
-        license             = __license__,
-        keywords            = __keywords__,
-        packages            = __packages__,
-        platforms           = __platforms__,
-        test_suite          = __test_suite__,
-        tests_require       = __tests_require__,
-        install_requires    = __requires__,
-        extras_require      = __extra_requires__,
-        entry_points        = __entry_points__
-    )
+    setup_kwargs = {
+        'name': name,
+        'version': version,
+        'description': description,
+        'long_description': long_description,
+        'url': url,
+        'author': author,
+        'author_email': author_email,
+        'license': license,
+        'classifiers': classifiers,
+        'keywords': keywords,
+        'packages': packages,
+        'install_requires': install_requires,
+        'extras_require': extras_require,
+        'package_data': package_data,
+        'include_package_data': True,
+        'data_files': data_files,
+        'entry_points': entry_points
+    }
+    setup(**setup_kwargs)
 
 
 if __name__ == '__main__':
-    main()
+    _run_setup()
+
