@@ -70,7 +70,7 @@ def process_handler_key(event, action, resource_type):
     return None
 
 
-def iter_subclasses(self, base_class):
+def iter_subclasses(base_class):
     classes = deque()
     classes.append(base_class)
 

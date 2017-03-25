@@ -7,41 +7,22 @@ Todo
 """
 import logging
 import weakref
-import collections
-from operator import attrgetter
 
-from elemental_core import NO_VALUE
-from elemental_core.util import process_uuid_value
+from elemental_core.util import (
+    process_uuid_value,
+    Hook
+)
 
-from ._resource_index import ResourceIndex
-from ._util import iter_subclasses
 from ._resource_model_base import ResourceModelBase
+from ._util import iter_subclasses
 from .errors import (
-    ResourceError,
     ResourceNotFoundError,
     ResourceNotRegisteredError,
     ResourceCollisionError,
     ResourceNotReleasedError,
-    ResourceNotRetrievedError
+    ResourceNotRetrievedError,
+    ResourceIndexNotFoundError
 )
-
-
-# from .resources import (
-#     Resource,
-#     ResourceType,
-#     ResourceInstance,
-#     ContentType,
-#     ContentInstance,
-#     AttributeType,
-#     AttributeInstance,
-#     ViewType,
-#     ViewInstance,
-#     ViewResult,
-#     FilterType,
-#     FilterInstance,
-#     SorterType,
-#     SorterInstance
-# )
 
 
 _LOG = logging.getLogger(__name__)
@@ -51,6 +32,13 @@ class Model(object):
     """
     A `Model` manages `Resource` instances and their relationships.
     """
+    resource_registered = Hook()
+    resource_registration_failed = Hook()
+    resource_retrieved = Hook()
+    resource_retrieval_failed = Hook()
+    resource_released = Hook()
+    resource_release_failed = Hook()
+
     @property
     def index__resource_cls__resources(self):
         return self._map__resource_cls__resources
@@ -78,7 +66,7 @@ class Model(object):
 
             for index in resource_indexes:
                 if index.key_type is resource_cls:
-                    self._indexes[(index.key_type, index.value_type)] = index
+                    self._resource_indexes[(index.key_type, index.value_type)] = index
 
     def register_resource(self, resource):
         """
@@ -117,99 +105,82 @@ class Model(object):
             raise ResourceNotRegisteredError(msg, resource_type=type(resource),
                                              resource_id=resource_id)
 
-        # Registrars create relationships between resources, while
-        # Deregistrars unwind those relationships. Each Resource class must
-        # have both a Registrar and Deregistrar
-        registrars = self._compute_resource_registrars(resource)
-        deregistrars = self._compute_resource_deregistrars(resource)
-
-        if not registrars:
-            msg = (
-                'Failed to register resource: '
-                'Unsupported type "{0}"'
-            )
-            msg = msg.format(repr(type(resource)))
-
-            _LOG.error(msg)
-            raise ResourceNotRegisteredError(msg, resource_type=type(resource),
-                                             resource_id=resource_id)
-        elif registrars.keys() != deregistrars.keys():
-            msg = (
-                'Failed to register resource: '
-                'Mismatch in registrars/deregistrars for type "{0}"'
-            )
-            msg = msg.format(repr(type(resource)))
-
-            _LOG.error(msg)
-            raise ResourceNotRegisteredError(msg, resource_type=type(resource),
-                                             resource_id=resource_id)
-
-        # As registrars are associated with Resource classes, they are invoked
-        # in reverse method resolution order; that is, registrars associated
-        # with base classes are invoked before those associated with leaf-level
-        # classes.
-        sorted_resource_types = sorted(registrars.keys(),
+        # The registration process iterates through all appropriate
+        # ResourceModel instances, calling each model's register method.
+        # In the event a register method fails, all previous models are
+        # given the opportunity to release the resource.
+        resource_models = self._compute_resource_models(resource)
+        resource_models = [
+            resource_models[resource_cls]
+            for resource_cls in sorted(resource_models.keys(),
                                        key=lambda cls: len(cls.mro()))
-        sorted_deregistrars = []
+            ]
 
-        # A list of deregistrars is made as registrars are invoked.
-        # In the event a registrar fails, the deregistrars are invoked in
-        # normal method resolution order (leaf to base) in order to rollback
-        # changes to the model.
-        registrar_error = None
-        problem_registrar = None
-        while not registrar_error and sorted_resource_types:
-            resource_type = sorted_resource_types.pop(0)
-            registrar = registrars[resource_type]
+        problem_model = None
+        registration_error = None
+        release_errors = []
 
+        model_idx = 0
+        while -1 < model_idx < len(resource_models):
+            resource_model = resource_models[model_idx]
+
+            if not registration_error:
+                try:
+                    resource_model.register(self, resource)
+                    model_idx += 1
+                except ResourceCollisionError as e:
+                    raise e
+                except ResourceNotRegisteredError as e:
+                    registration_error = e
+                    problem_model = resource_model
+                    break
+                except Exception as e:
+                    registration_error = e
+                    problem_model = resource_model
+            else:
+                try:
+                    resource_model.release(self, resource)
+                except Exception as e:
+                    msg = '"{0}" release failed - "{1}"'
+                    msg = msg.format(resource_model.__name__, e)
+                    release_errors.append(msg)
+                model_idx -= 1
+
+        if not registration_error:
             try:
-                registrar(resource)
-            except ResourceCollisionError as e:
-                raise e
-            except ResourceNotRegisteredError as e:
-                registrar_error = e
-                problem_registrar = registrar
-                break
+                self.resource_registered(self, resource)
             except Exception as e:
-                registrar_error = e
-                problem_registrar = registrar
+                registration_error = e
+                try:
+                    self.resource_registration_failed(self, resource)
+                except Exception as e:
+                    release_errors.append(e)
 
-            sorted_deregistrars.append(deregistrars[resource_type])
-
-        rollback_errors = []
-        while registrar_error and sorted_deregistrars:
-            deregistrar = sorted_deregistrars.pop()
-            try:
-                deregistrar(resource)
-            except Exception as dr_e:
-                msg = 'Deregistrar "{0}" failed - "{1}"'
-                msg = msg.format(deregistrar.__name__, dr_e)
-                rollback_errors.append(msg)
-
-        if registrar_error:
-            if rollback_errors:
+        if registration_error:
+            if release_errors:
                 msg = (
                     'Failed to register resource: '
-                    'Registrar "{0}" failed - {1}: "{2}"\n'
+                    'ResourceModel "{0}" failed - {1}: "{2}"\n'
                     'Model Integrity Compromised: '
                     'Registration rollback failed\n\t{2}'
                 )
-                msg = msg.format(problem_registrar.__name__,
-                                 str(type(registrar_error).__name__),
-                                 str(registrar_error),
-                                 '\n\t'.join(rollback_errors))
+                msg = msg.format(problem_model.__name__,
+                                 type(registration_error).__name__,
+                                 str(registration_error),
+                                 '\n\t'.join(release_errors))
             else:
                 msg = (
                     'Failed to register resource: '
-                    'Registrar "{0}" failed - "{1}"\n'
+                    'ResourceModel "{0}" failed - "{1}"\n'
                     'Model integrity recovered: '
                     'Registration rollback succeeded'
                 )
-                msg = msg.format(problem_registrar.__name__,
-                                 str(registrar_error))
+                msg = msg.format(problem_model.__name__,
+                                 str(registration_error))
 
             _LOG.error(msg)
-            raise ResourceNotRegisteredError(msg, resource_type=type(resource),
+            raise ResourceNotRegisteredError(msg,
+                                             resource_type=type(resource),
                                              resource_id=resource_id)
 
         msg = 'Registered resource: "{0}" - "{1}"'
@@ -231,28 +202,15 @@ class Model(object):
         _LOG.info(msg)
 
         try:
-            _resource_id = process_uuid_value(resource_id)
+            resource_id = self._process_requested_resource_id(resource_id)
         except ValueError:
             msg = (
-                'Failed to retrieve resource with id "{0}": '
+                'Failed to retrieve resource with id "{0}":'
                 'Invalid UUID value.'
             )
             msg = msg.format(resource_id)
-
             _LOG.error(msg)
             raise ValueError(msg)
-        else:
-            if _resource_id:
-                resource_id = _resource_id
-            else:
-                msg = (
-                    'Failed to retrieve resource with id "{0}":'
-                    'Invalid UUID value'
-                )
-                msg = msg.format(_resource_id)
-
-                _LOG.error(msg)
-                raise ValueError(msg)
 
         try:
             result = self._resources[resource_id]
@@ -264,36 +222,52 @@ class Model(object):
             msg = msg.format(resource_id)
 
             _LOG.error(msg)
-            raise ResourceNotFoundError(msg, resource_type=None,
+            raise ResourceNotFoundError(msg,
+                                        resource_type=None,
                                         resource_id=resource_id)
 
-        retrievers = self._compute_resource_retrievers(result)
-        sorted_resource_types = sorted(retrievers.keys(),
+        resource_models = self._compute_resource_models(result)
+        resource_models = [
+            resource_models[resource_cls]
+            for resource_cls in sorted(resource_models.keys(),
                                        key=lambda cls: len(cls.mro()))
-        retriever_error = None
-        problem_retriever = None
-        while not retriever_error and sorted_resource_types:
-            resource_type = sorted_resource_types.pop(0)
-            retriever = retrievers[resource_type]
+        ]
+        problem_model = None
+        retrieval_errors = []
+
+        while not retrieval_errors and resource_models:
+            resource_model = resource_models.pop(0)
 
             try:
-                result = retriever(result)
+                result = resource_model.retrieve(self, resource_id,
+                                                 resource=result)
             except ResourceNotFoundError:
                 raise
             except Exception as e:
-                retriever_error = e
-                problem_retriever = retriever
+                retrieval_errors.append(e)
+                problem_model = resource_model
 
-        if retriever_error:
+        if not retrieval_errors:
+            try:
+                self.resource_retrieved(self, result)
+            except Exception as e:
+                retrieval_errors.append(e)
+                try:
+                    self.resource_retrieval_failed(self, result)
+                except Exception as e:
+                    retrieval_errors.append(e)
+
+        if retrieval_errors:
             msg = (
                 'Failed to retrieve resource: '
-                'Retriever "{0}" failed - "{1}"'
+                'Model "{0}" retrieval failed:\n\t{0}'
             )
-            msg = msg.format(problem_retriever.__name__,
-                             str(retriever_error))
+            msg = msg.format(problem_model.__name__,
+                             '\n\t'.join([str(e) for e in retrieval_errors]))
 
             _LOG.error(msg)
-            raise ResourceNotRetrievedError(msg, resource_type=type(result),
+            raise ResourceNotRetrievedError(msg,
+                                            resource_type=type(result),
                                             resource_id=resource_id)
 
         msg = 'Retrieved resource: "{0}" - "{1}"'
@@ -308,7 +282,7 @@ class Model(object):
 
         The Model will delete all references to the Resource instance,
         including its single strong reference. If no other strong references
-        exist, the Resource instance will get garbage collected.
+        exist, the Resource instance will be garbage collected.
 
         Args:
             resource_id (str or uuid): The ID of the `Resource` to release.
@@ -319,93 +293,103 @@ class Model(object):
         msg = 'Releasing resource: "{0}"'.format(resource_id)
         _LOG.info(msg)
 
-        result = self.retrieve_resource(resource_id)
-        deregistrars = self._compute_resource_deregistrars(result)
-        registrars = self._compute_resource_registrars(result)
-
-        if not deregistrars:
+        try:
+            resource_id = self._process_requested_resource_id(resource_id)
+        except ValueError:
             msg = (
-                'Failed to release resource: '
-                'Unsupported type "{0}"'
+                'Failed to release resource with id "{0}": '
+                'Invalid UUID value.'
             )
-            msg = msg.format(repr(type(result)))
+            msg = msg.format(resource_id)
 
             _LOG.error(msg)
-            raise ResourceNotReleasedError(msg, resource_type=type(result),
-                                           resource_id=resource_id)
-        elif registrars.keys() != deregistrars.keys():
+            raise ValueError(msg)
+
+        try:
+            result = self._resources[resource_id]
+        except KeyError:
             msg = (
-                'Failed to release resource: '
-                'Mismatch in deregistrars/registrars for type "{0}"'
+                'Failed to release resource:'
+                'No resource found matching id "{0}"'
             )
-            msg = msg.format(repr(type(result)))
+            msg = msg.format(resource_id)
 
             _LOG.error(msg)
-            raise ResourceNotReleasedError(msg, resource_type=type(result),
-                                           resource_id=resource_id)
+            raise ResourceNotFoundError(msg,
+                                        resource_type=None,
+                                        resource_id=resource_id)
 
-        # As deregistrars are associated with Resource classes, they are
-        # invoked in method resolution order; that is, registrars associated
-        # with leaf-level classes are invoked before those associated with base
-        # classes.
-        sorted_resource_types = sorted(deregistrars.keys(),
-                                       key=lambda cls: len(cls.mro()),
-                                       reverse=True)
-        # sorted_resource_types = reversed(sorted_resource_types)
-        sorted_registrars = []
+        # The release process iterates through all appropriate
+        # ResourceModel instances, calling each model's release method.
+        # In the event a release method fails, all previous models are
+        # given the opportunity to re-register the resource.
+        resource_models = self._compute_resource_models(result)
+        resource_models = [
+            resource_models[resource_cls]
+            for resource_cls in sorted(resource_models.keys(),
+                                       key=lambda cls: len(cls.mro()))
+        ]
 
-        # A list of registrars is made as deregistrars are invoked.
-        # In the event a deregistrar fails, the registrars are invoked in
-        # reverse method resolution order (base to leaf) in order to rollback
-        # changes to the model.
-        deregistrar_error = None
-        problem_deregistrar = None
-        while not deregistrar_error and sorted_resource_types:
-            resource_type = sorted_resource_types.pop(0)
-            deregistrar = deregistrars[resource_type]
+        problem_model = None
+        release_error = None
+        registration_errors = []
 
+        model_idx = len(resource_models) - 1
+        while -1 < model_idx < len(resource_models):
+            resource_model = resource_models[model_idx]
+
+            if not release_error:
+                try:
+                    resource_model.release(self, result)
+                    model_idx -= 1
+                except ResourceCollisionError as e:
+                    raise e
+                except ResourceNotRegisteredError as e:
+                    release_error = e
+                    problem_model = resource_model
+                    break
+                except Exception as e:
+                    release_error = e
+                    problem_model = resource_model
+            else:
+                try:
+                    resource_model.register(self, result)
+                except Exception as e:
+                    msg = '"{0}" release failed - "{1}"'
+                    msg = msg.format(resource_model.__name__, e)
+                    registration_errors.append(msg)
+                model_idx += 1
+
+        if not release_error:
             try:
-                deregistrar(result)
-            except ResourceNotReleasedError as e:
-                deregistrar_error = e
-                problem_deregistrar = deregistrar
-                break
+                self.resource_released(self, result)
             except Exception as e:
-                deregistrar_error = e
-                problem_deregistrar = deregistrar
+                release_error = e
+                try:
+                    self.resource_release_failed(self, result)
+                except Exception as e:
+                    registration_errors.append(e)
 
-            sorted_registrars.append(deregistrars[resource_type])
-
-        rollback_errors = []
-        while deregistrar_error and sorted_registrars:
-            registrar = sorted_registrars.pop()
-            try:
-                registrar(result)
-            except Exception as r_e:
-                msg = 'Registrar "{0}" failed - "{1}"'
-                msg = msg.format(registrar.__name__, r_e)
-                rollback_errors.append(msg)
-
-        if deregistrar_error:
-            if rollback_errors:
+        if release_error:
+            if registration_errors:
                 msg = (
                     'Failed to release resource: '
-                    'Deregistrar "{0}" failed - "{1}"\n'
+                    'Model "{0}" failed - "{1}"\n'
                     'Model Integrity Compromised: '
-                    'Deregistration rollback failed\n\t{2}'
+                    'Release rollback failed\n\t{2}'
                 )
-                msg = msg.format(problem_deregistrar.__name__,
-                                 str(deregistrar_error),
-                                 '\n\t'.join(rollback_errors))
+                msg = msg.format(problem_model.__name__,
+                                 str(release_error),
+                                 '\n\t'.join(registration_errors))
             else:
                 msg = (
                     'Failed to release resource: '
-                    'Deregistrar "{0}" failed - "{1}"\n'
+                    'ResourceModel "{0}" failed - "{1}"\n'
                     'Model integrity recovered: '
-                    'Deregistration rollback succeeded'
+                    'Release rollback succeeded'
                 )
-                msg = msg.format(problem_deregistrar.__name__,
-                                 str(deregistrar_error))
+                msg = msg.format(problem_model.__name__,
+                                 str(release_error))
 
             _LOG.error(msg)
             raise ResourceNotReleasedError(msg, resource_type=type(result),
@@ -414,6 +398,15 @@ class Model(object):
         msg = 'Released resource: "{0}" - "{1}"'
         msg = msg.format(repr(type(result)), result.id)
         _LOG.info(msg)
+        return result
+
+    @staticmethod
+    def _process_requested_resource_id(resource_id):
+        result = process_uuid_value(resource_id)
+
+        if not result:
+            raise ValueError()
+
         return result
 
     def _compute_resource_models(self, resource):
@@ -441,9 +434,10 @@ class Model(object):
         index_key = (key_type, value_type)
 
         try:
-            result = self._indexes[index_key]
+            result = self._resource_indexes[index_key]
         except KeyError:
-            result = ResourceIndex()
-            self._indexes[index_key] = result
+            msg = 'No index exists with key-type "{0}" and value-type "{1}".'
+            msg = msg.format(key_type, value_type)
+            raise ResourceIndexNotFoundError(msg)
 
         return result

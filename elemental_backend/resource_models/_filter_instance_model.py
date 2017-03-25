@@ -3,7 +3,8 @@ import logging
 from .._resource_model_base import ResourceModelBase
 from .._resource_index import ResourceIndex
 from ..resources import (
-    FilterInstance
+    FilterInstance,
+    ViewInstance
 )
 
 
@@ -12,49 +13,58 @@ _LOG = logging.getLogger(__name__)
 
 class FilterInstanceModel(ResourceModelBase):
     __resource_cls__ = FilterInstance
-    __resource_indexes__ = ()
+    __resource_indexes__ = (
+        ResourceIndex(FilterInstance, ViewInstance, indexed_capacity=1)
+    )
 
     def register(self, core_model, resource):
-        map_fi_vi = self._map__filter_instance__view_instance
-        self._fix_map_key(map_fi_vi, filter_instance.id)
+        idx_fi_vi = core_model.get_resource_index(FilterInstance, ViewInstance)
+        idx_fi_vi.create_index(resource)
 
         # self._update_view_instance_content_instances()
 
-        hook = filter_instance.kind_params_changed
+        hook = resource.kind_params_changed
         handler = self._handler_filter_instance_kind_params_changed
         hook.add_handler(handler)
 
-        ref = type(filter_instance).view_instance
+        ref = type(resource).view_instance
         resolver = self._resolve_filter_instance_view_instance
-        ref.add_resolver(filter_instance, resolver)
+        ref.add_resolver(resource, resolver)
+
+    def retrieve(self, core_model, resource_id, resource=None):
+        return resource
 
     def release(self, core_model, resource):
-        map_fi_vi = self._map__filter_instance__view_instance
-        try:
-            del map_fi_vi[filter_instance.id]
-        except KeyError:
-            pass
+        idx_fi_vi = core_model.get_resource_index(FilterInstance, ViewInstance)
+        idx_fi_vi.pop_index(resource)
 
         # self._update_view_instance_content_instances()
 
-        hook = filter_instance.kind_params_changed
+        hook = resource.kind_params_changed
         handler = self._handler_filter_instance_kind_params_changed
         hook.remove_handler(handler)
 
-        ref = type(filter_instance).view_instance
-        ref.remove_resolver(filter_instance)
+        ref = type(resource).view_instance
+        ref.remove_resolver(resource)
 
-    def _handler_filter_instance_kind_params_changed(
-            self, sender, event_data):
-        map_fi_vi = self._map__filter_instance__view_instance
-        view_inst_id = map_fi_vi[sender.id]
+    def _handler_filter_instance_kind_params_changed(self, sender, event_data):
+        idx_fi_vi = self._core_model.get_resource_index(FilterInstance, ViewInstance)
+
+        try:
+            view_inst_id = idx_fi_vi.get_indexed_value(sender)[0]
+        except IndexError:
+            return
+
         # self._update_view_instance_content_instances(view_inst_id)
 
     def _resolve_filter_instance_view_instance(self, filter_instance_id):
-        map_fi_vi = self._map__filter_instance__view_instance
+        idx_fi_vi = self._core_model.get_resource_index(FilterInstance, ViewInstance)
 
-        result = map_fi_vi.get(filter_instance_id)
-        if result:
-            result = self._resources.get(result)
+        try:
+            result = idx_fi_vi.get_indexed_value(filter_instance_id)[0]
+        except IndexError:
+            result = None
+        else:
+            result = self._core_model.get_resource(result)
 
         return result
