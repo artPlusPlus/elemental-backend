@@ -6,9 +6,6 @@ from ..resources import (
     ResourceType,
     ResourceInstance
 )
-from ..errors import (
-    ResourceNotRegisteredError
-)
 
 
 _LOG = logging.getLogger(__name__)

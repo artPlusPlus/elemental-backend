@@ -1,6 +1,8 @@
 import logging
 import collections
 
+from elemental_core import NO_VALUE
+
 from .._resource_model_base import ResourceModelBase
 from .._resource_index import ResourceIndex
 from ..resources import (
@@ -15,7 +17,7 @@ _LOG = logging.getLogger(__name__)
 class ViewResultModel(ResourceModelBase):
     __resource_cls__ = ViewResult
     __resource_indexes__ = (
-        ResourceIndex(ViewResult, ViewInstance)
+        ResourceIndex(ViewResult, ViewInstance, indexed_capacity=1)
     )
 
     def register(self, resource):

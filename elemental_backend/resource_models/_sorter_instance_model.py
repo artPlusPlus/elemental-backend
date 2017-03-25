@@ -49,7 +49,7 @@ class SorterInstanceModel(ResourceModelBase):
         ref = type(resource).view_instance
         ref.remove_resolver(resource)
 
-    def _handler_sorter_instance_kind_params_changed(self, sender, event_data):
+    def _handler_sorter_instance_kind_params_changed(self, sender, data):
         idx_si_vi = self._get_index(SorterInstance, ViewInstance)
 
         try:
@@ -64,10 +64,10 @@ class SorterInstanceModel(ResourceModelBase):
         idx_si_vi = self._get_index(SorterInstance, ViewInstance)
 
         try:
-            result = idx_si_vi.get_indexed_value(sender)[0]
+            result = idx_si_vi.get_indexed_value(sorter_instance_id)[0]
         except IndexError:
             result = None
         else:
-            result = self._resolve_resource(result)
+            result = self._get_resource(result)
 
         return result

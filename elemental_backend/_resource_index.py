@@ -44,6 +44,10 @@ class ResourceIndex(object):
             value_collection = deque()
             self._map__idx_resource_id__resource_ids[key] = value_collection
 
+    def iter_index_keys(self):
+        for key in self._map__index_key__indexed_data:
+            yield key
+
     def pop_index(self, key):
         try:
             key = key.id

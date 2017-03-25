@@ -1,12 +1,13 @@
 import logging
 
+from elemental_core import NO_VALUE
+
 from .._resource_model_base import ResourceModelBase
 from .._resource_index import ResourceIndex
 from ..resources import (
     AttributeInstance,
     ContentInstance
 )
-from ..errors import ResourceNotRegisteredError
 
 
 _LOG = logging.getLogger(__name__)

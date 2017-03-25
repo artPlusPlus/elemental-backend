@@ -27,7 +27,8 @@ class ResourceModel(ResourceModelBase):
         handler = self._handle_resource_id_changed
         hook.remove_handler(handler)
 
-    def _handle_resource_id_changed(self, sender, data):
+    @staticmethod
+    def _handle_resource_id_changed(sender, data):
         msg = 'Mutable Ids are not supported.'
 
         _LOG.error(msg)

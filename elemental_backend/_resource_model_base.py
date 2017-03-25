@@ -1,5 +1,7 @@
 from weakref import WeakMethod
 
+from elemental_core import NO_VALUE
+
 
 class ResourceModelBase(object):
     __resource_cls__ = None
@@ -35,13 +37,13 @@ class ResourceModelBase(object):
         self._get_resource = resource_getter
         self._get_index = index_getter
 
-    def register(self, core_model, resource):
+    def register(self, resource):
         raise NotImplementedError()
 
-    def retrieve(self, core_model, resource_id, resource=None):
+    def retrieve(self, resource_id, resource=None):
         raise NotImplementedError()
 
-    def release(self, core_model, resource):
+    def release(self, resource):
         raise NotImplementedError()
 
     def _handle_resource_registered(self, sender, data):

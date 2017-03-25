@@ -5,7 +5,9 @@ from .._resource_index import ResourceIndex
 from ..resources import (
     ViewType,
     ContentInstance,
-    ContentType
+    ContentType,
+    ResourceType,
+    ResourceInstance
 )
 
 
@@ -16,19 +18,16 @@ class ViewTypeModel(ResourceModelBase):
     __resource_cls__ = ViewType
     __resource_indexes__ = (
         ResourceIndex(ViewType, ContentInstance),
-        ResourceIndex(ContentType, ViewType)
+        ResourceIndex(ContentType, ViewType),
+        ResourceIndex(ContentType, ContentInstance)
     )
 
     def register(self, resource):
         idx_vt_cis = self._get_index(ViewType, ContentInstance)
         idx_vt_cis.create_index(resource)
 
-        idx_ct_vts = self._get_index(ContentType, ViewType)
-        for content_type_id in resource.content_type_ids:
-            idx_ct_vts.push_index_value(content_type_id, resource)
-
-        raise RuntimeError('TODO: Add ViewTypeModel Hook.')
-        # self._update_view_type_content_instances(resource.id)
+        self._populate_content_type_view_types_index(resource)
+        self._populate_view_type_content_instances_index(resource)
 
         hook = resource.content_type_ids_changed
         handler = self._handle_view_type_content_type_ids_changed
@@ -111,7 +110,32 @@ class ViewTypeModel(ResourceModelBase):
 
         return result
 
-    def _update_view_type_content_instances(self, view_type_id):
+    def _handle_resource_registered(self, sender, data):
+        if isinstance(data, ContentInstance):
+            self._handle_content_instance_registered(data)
+
+    def _handle_resource_released(self, sender, data):
+        if isinstance(data, ContentInstance):
+            self._handle_content_instance_released(data)
+
+    def _handle_content_instance_registered(self, content_instance):
+        idx_vt_cis = self._get_index(ViewType, ContentInstance)
+        for view_type_id in idx_vt_cis.iter_index_keys():
+            view_type = self._get_resource(view_type_id)
+            if content_instance.type_id in view_type.content_type_ids:
+                idx_vt_cis.push_indexed_value(view_type, content_instance)
+
+    def _handle_content_instance_released(self, content_instance):
+        idx_vt_cis = self._get_index(ViewType, ContentInstance)
+        for view_type_id in idx_vt_cis.iter_index_keys():
+            idx_vt_cis.pop_indexed_value(view_type_id, content_instance)
+
+    def _populate_content_type_view_types_index(self, view_type):
+        idx_ct_vts = self._get_index(ContentType, ViewType)
+        for content_type_id in view_type.content_type_ids:
+            idx_ct_vts.push_index_value(content_type_id, view_type)
+
+    def _populate_view_type_content_instances_index(self, view_type):
         """
         Builds a mapping of all ContentInstances that qualify for a ViewType.
 
@@ -121,12 +145,10 @@ class ViewTypeModel(ResourceModelBase):
         FilterInstances to each ContentInstance in the pool to compute the
         data for a corresponding ViewResult.
         """
-        view_type = self._core_model.get_resource(view_type_id)
-        idx_rt_ri = self._core_model.get_resource_index(ResourceType, ResourceInstance)
-        idx_vt_cis = self._core_model.get_resource_index(ViewType, ContentInstance)
+        idx_rt_ri = self._get_index(ResourceType, ResourceInstance)
+        idx_vt_cis = self._get_index(ViewType, ContentInstance)
 
-        content_inst_ids = map_vt_cis[view_type.id]
-        content_inst_ids.clear()
-        for type_id in view_type.content_type_ids:
-            content_inst_ids.update(map_rt_ri.get(type_id, tuple()))
-
+        for content_type_id in view_type.content_type_ids:
+            content_inst_ids = idx_rt_ri.iter_indexed_values(content_type_id)
+            for content_inst_id in content_inst_ids:
+                idx_vt_cis.push_indexed_value(view_type, content_inst_id)
