@@ -17,10 +17,11 @@ class SorterInstanceModel(ResourceModelBase):
         ResourceIndex(SorterInstance, ViewInstance, indexed_capacity=1)
     )
 
-    def register(self, core_model, resource):
-        idx_si_vi = core_model.get_resource_index(SorterInstance, ViewInstance)
+    def register(self, resource):
+        idx_si_vi = self._get_index(SorterInstance, ViewInstance)
         idx_si_vi.create_index(resource)
 
+        raise RuntimeError('TODO: Add ViewInstance hook.')
         # self._update_view_instance_content_instances()
 
         hook = resource.kind_params_changed
@@ -31,13 +32,14 @@ class SorterInstanceModel(ResourceModelBase):
         resolver = self._resolve_sorter_instance_view_instance
         ref.add_resolver(resource, resolver)
 
-    def retrieve(self, core_model, resource_id, resource=None):
+    def retrieve(self, resource_id, resource=None):
         return resource
 
-    def release(self, core_model, resource):
-        idx_si_vi = core_model.get_resource_index(SorterInstance, ViewInstance)
+    def release(self, resource):
+        idx_si_vi = self._get_index(SorterInstance, ViewInstance)
         idx_si_vi.pop_index(resource)
 
+        raise RuntimeError('TODO: Add ViewInstance hook.')
         # self._update_view_instance_content_instances()
 
         hook = resource.kind_params_changed
@@ -48,17 +50,18 @@ class SorterInstanceModel(ResourceModelBase):
         ref.remove_resolver(resource)
 
     def _handler_sorter_instance_kind_params_changed(self, sender, event_data):
-        idx_si_vi = self._core_model.get_resource_index(SorterInstance, ViewInstance)
+        idx_si_vi = self._get_index(SorterInstance, ViewInstance)
 
         try:
             view_inst_id = idx_si_vi.get_indexed_value(sender)[0]
         except IndexError:
             return
 
+        raise RuntimeError('TODO: Add ViewInstance Hook')
         # self._update_view_instance_content_instances(view_inst_id)
 
     def _resolve_sorter_instance_view_instance(self, sorter_instance_id):
-        idx_si_vi = self._core_model.get_resource_index(SorterInstance, ViewInstance)
+        idx_si_vi = self._get_index(SorterInstance, ViewInstance)
 
         try:
             result = idx_si_vi.get_indexed_value(sender)[0]

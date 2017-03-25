@@ -2,8 +2,10 @@ import logging
 import collections
 
 from .._resource_model_base import ResourceModelBase
+from .._resource_index import ResourceIndex
 from ..resources import (
-    ViewResult
+    ViewResult,
+    ViewInstance
 )
 
 
@@ -12,9 +14,14 @@ _LOG = logging.getLogger(__name__)
 
 class ViewResultModel(ResourceModelBase):
     __resource_cls__ = ViewResult
-    __resource_indexes__ = tuple()
+    __resource_indexes__ = (
+        ResourceIndex(ViewResult, ViewInstance)
+    )
 
-    def register(self, core_model, resource):
+    def register(self, resource):
+        idx_vr_vi = self._get_index(ViewResult, ViewInstance)
+        idx_vr_vi.push_index(resource)
+
         hook = resource.content_instance_ids_changed
         handler = self._handle_view_result_content_instance_ids_changed
         hook.add_handler(handler)
@@ -24,22 +31,19 @@ class ViewResultModel(ResourceModelBase):
         ref.add_resolver(resource, resolver)
 
         ref = type(resource).content_instances
-        resolver = self._resolve_resources
+        resolver = self._get_resources
         ref.add_resolver(resource, resolver)
 
-    def retrieve(self, core_model, resource_id, resource=None):
+    def retrieve(self, resource_id, resource=None):
         result = resource
 
         self._update_view_result_content_instances(resource.id)
 
         return result
 
-    def release(self, core_model, resource):
-        map_vr_vi = self._map__view_result__view_instance
-        try:
-            del map_vr_vi[resource.id]
-        except KeyError:
-            pass
+    def release(self, resource):
+        idx_vr_vi = self._get_index(ViewResult, ViewInstance)
+        idx_vr_vi.pop_index(resource)
 
         hook = resource.content_instance_ids_changed
         handler = self._handle_view_result_content_instance_ids_changed
@@ -56,11 +60,14 @@ class ViewResultModel(ResourceModelBase):
         pass
 
     def _resolve_view_result_view_instance(self, view_result_id):
-        map_vr_vi = self._map__view_result__view_instance
+        idx_vr_vi = self._get_index(ViewResult, ViewInstance)
 
-        result = map_vr_vi.get(view_result_id)
-        if result:
-            result = self._resources.get(result)
+        try:
+            result = idx_vr_vi.get_indexed_value(view_result_id)[0]
+        except IndexError:
+            result = NO_VALUE
+        else:
+            result = self._get_resource(result)
 
         return result
 

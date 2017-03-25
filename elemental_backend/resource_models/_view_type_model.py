@@ -15,18 +15,20 @@ _LOG = logging.getLogger(__name__)
 class ViewTypeModel(ResourceModelBase):
     __resource_cls__ = ViewType
     __resource_indexes__ = (
-        ResourceIndex(ViewType, ContentInstance)
+        ResourceIndex(ViewType, ContentInstance),
+        ResourceIndex(ContentType, ViewType)
     )
 
-    def register(self, core_model, resource):
-        idx_vt_cis = core_model.get_resource_index(ViewType, ContentInstance)
+    def register(self, resource):
+        idx_vt_cis = self._get_index(ViewType, ContentInstance)
         idx_vt_cis.create_index(resource)
 
-        idx_ct_vts = core_model.get_resource_index(ContentType, ViewType)
+        idx_ct_vts = self._get_index(ContentType, ViewType)
         for content_type_id in resource.content_type_ids:
             idx_ct_vts.push_index_value(content_type_id, resource)
 
-        self._update_view_type_content_instances(resource.id)
+        raise RuntimeError('TODO: Add ViewTypeModel Hook.')
+        # self._update_view_type_content_instances(resource.id)
 
         hook = resource.content_type_ids_changed
         handler = self._handle_view_type_content_type_ids_changed
@@ -41,26 +43,31 @@ class ViewTypeModel(ResourceModelBase):
         hook.add_handler(handler)
 
         ref = type(resource).content_types
-        resolver = self._resolve_resources
+        resolver = self._get_resources
         ref.add_resolver(resource, resolver)
 
         ref = type(resource).filter_types
-        resolver = self._resolve_resources
+        resolver = self._get_resources
         ref.add_resolver(resource, resolver)
 
         ref = type(resource).sorter_types
-        resolver = self._resolve_resources
+        resolver = self._get_resources
         ref.add_resolver(resource, resolver)
 
         ref = type(resource).content_instances
         resolver = self._resolve_view_type_content_instances
         ref.add_resolver(resource, resolver)
 
-    def retrieve(self, core_model, resource_id, resource=None):
-        pass
+    def retrieve(self, resource_id, resource=None):
+        return resource
 
-    def release(self, core_model, resource):
-        del self._map__view_type__content_instances[resource.id]
+    def release(self, resource):
+        idx_vt_cis = self._get_index(ViewType, ContentInstance)
+        idx_vt_cis.pop_index(resource)
+
+        idx_ct_vts = self._get_index(ContentType, ViewType)
+        for content_type_id in resource.content_type_ids:
+            idx_ct_vts.pop_index_value(content_type_id, resource)
 
         hook = resource.content_type_ids_changed
         handler = self._handle_view_type_content_type_ids_changed
@@ -95,6 +102,14 @@ class ViewTypeModel(ResourceModelBase):
     def _handle_view_type_sorter_type_ids_changed(
             self, sender, event_data):
         pass
+
+    def _resolve_view_type_content_instances(self, view_type_id):
+        idx_vt_cis = self._get_index(ViewType, ContentInstance)
+
+        result = idx_vt_cis.iter_indexed_values(view_type_id)
+        result = self._get_resources(result)
+
+        return result
 
     def _update_view_type_content_instances(self, view_type_id):
         """

@@ -17,12 +17,13 @@ class SorterTypeModel(ResourceModelBase):
         ResourceIndex(AttributeType, SorterType)
     )
 
-    def register(self, core_model, resource):
-        idx_at_sts = core_model.get_resource_index(AttributeType, SorterType)
+    def register(self, resource):
+        idx_at_sts = self._get_index(AttributeType, SorterType)
 
         for attribute_type_id in resource.attribute_type_ids:
             idx_at_sts.push_index_value(attribute_type_id, resource)
 
+        raise RuntimeError('TODO: Add ViewInstance Hook.')
         # self._update_view_instance_content_instances()
 
         hook = resource.attribute_type_ids_changed
@@ -30,18 +31,19 @@ class SorterTypeModel(ResourceModelBase):
         hook.add_handler(handler)
 
         ref = type(resource).attribute_types
-        resolver = self._resolve_resources
+        resolver = self._get_resources
         ref.add_resolver(resource, resolver)
 
-    def retrieve(self, core_model, resource_id, resource=None):
+    def retrieve(self, resource_id, resource=None):
         return resource
 
-    def release(self, core_model, resource):
-        idx_at_sts = core_model.get_resource_index(AttributeType, SorterType)
+    def release(self, resource):
+        idx_at_sts = self._get_index(AttributeType, SorterType)
 
         for attribute_type_id in resource.attribute_type_ids:
             idx_at_sts.pop_index_value(attribute_type_id, resource)
 
+        raise RuntimeError('TODO: Add ViewInstance Hook.')
         # self._update_view_instance_content_instances()
 
         hook = resource.attribute_type_ids_changed
@@ -54,10 +56,10 @@ class SorterTypeModel(ResourceModelBase):
     def _handle_sorter_type_attribute_type_ids_changed(self, sender, event_data):
         original_value, current_value = event_data
 
-        added_attr_type_ids = set(current_value).difference(current_value)
+        added_attr_type_ids = set(current_value).difference(original_value)
         removed_attr_type_ids = set(original_value).difference(current_value)
 
-        idx_at_sts = self._core_model.get_resource_index(AttributeType, SorterType)
+        idx_at_sts = self._get_index(AttributeType, SorterType)
 
         for attribute_type_id in removed_attr_type_ids:
             idx_at_sts.pop_index_value(attribute_type_id, sender)
@@ -65,6 +67,7 @@ class SorterTypeModel(ResourceModelBase):
         for attribute_type_id in added_attr_type_ids:
             idx_at_sts.push_index_value(attribute_type_id, sender)
 
+        raise RuntimeError('TODO: Add ViewInstance Hook.')
         map_rt_ri = self._map__resource_type__resource_instances
         map_si_vi = self._map__sorter_instance__view_instance
         for sorter_inst_id in map_rt_ri[sender.id]:

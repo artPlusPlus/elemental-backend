@@ -17,8 +17,8 @@ class ResourceTypeModel(ResourceModelBase):
         ResourceIndex(ResourceType, ResourceInstance),
     )
 
-    def register(self, core_model, resource):
-        idx_rt_ris = core_model.get_resource_index(ResourceType, ResourceInstance)
+    def register(self, resource):
+        idx_rt_ris = self._get_index(ResourceType, ResourceInstance)
         idx_rt_ris.create_index(resource)
 
         hook = resource.name_changed
@@ -29,24 +29,12 @@ class ResourceTypeModel(ResourceModelBase):
         resolver = self._resolve_resource_type_resource_instances
         ref.add_resolver(resource, resolver)
 
-    def retrieve(self, core_model, resource_id, resource=None):
+    def retrieve(self, resource_id, resource=None):
         return resource
 
-    def release(self, core_model, resource):
-        idx_rt_ris = core_model.get_resource_index(ResourceType, ResourceInstance)
-
-        try:
-            idx_rt_ris.pop_index(resource)
-        except KeyError:
-            msg = (
-                'ResourceType "{0}" not found in '
-                'ResourceType:ResourceInstances map during deregistration.'
-                'This is unexpected and could be a symptom of a problematic'
-                'model.'
-            )
-            msg = msg.format(resource.id)
-
-            _LOG.warning(msg)
+    def release(self, resource):
+        idx_rt_ris = self._get_index(ResourceType, ResourceInstance)
+        idx_rt_ris.pop_index(resource)
 
         hook = resource.name_changed
         handler = self._handle_resource_type_name_changed
@@ -59,7 +47,9 @@ class ResourceTypeModel(ResourceModelBase):
         pass
 
     def _resolve_resource_type_resource_instances(self, resource_type_id):
-        idx_rt_ris = self._core_model.get_resource_index(ResourceType, ResourceInstance)
-        result = self._resolve_resources(idx_rt_ris.iter_index(resource_type_id))
+        idx_rt_ris = self._get_index(ResourceType, ResourceInstance)
+
+        result = idx_rt_ris.iter_index_values(resource_type_id)
+        result = self._get_resources(result)
 
         return result

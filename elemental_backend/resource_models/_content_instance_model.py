@@ -17,22 +17,10 @@ class ContentInstanceModel(ResourceModelBase):
         ResourceIndex(AttributeInstance, ContentInstance),
     )
 
-    def register(self, core_model, resource):
-        if not resource.type_id:
-            msg = (
-                'Failed to register resource "{0}": '
-                'Invalid type id - "{1}"'
-            )
-            msg = msg.format(repr(resource), resource.type_id)
-
-            _LOG.error(msg)
-            raise ResourceNotRegisteredError(
-                msg, resource_type=type(resource),
-                resource_id=resource.id)
-
-        idx_ai_ci = core_model.get_resource_index(AttributeInstance, ContentInstance)
+    def register(self, resource):
+        idx_ai_ci = self._get_index(AttributeInstance, ContentInstance)
         for attribute_id in resource.attribute_ids:
-            idx_ai_ci.push_index_value(attribute_id, resource)
+            idx_ai_ci.push_indexed_value(attribute_id, resource)
 
         raise RuntimeError('TODO: Add ViewTypeModel hook')
         # idx_ct_vts = core_model.get_resource_index(ContentType, ViewType)
@@ -50,16 +38,16 @@ class ContentInstanceModel(ResourceModelBase):
         hook.add_handler(handler)
 
         ref = type(resource).attributes
-        resolver = self._resolve_resources
+        resolver = self._get_resources
         ref.add_resolver(resource, resolver)
 
-    def retrieve(self, core_model, resource_id, resource=None):
-        pass
+    def retrieve(self, resource_id, resource=None):
+        return resource
 
-    def release(self, core_model, resource):
-        idx_ai_ci = core_model.get_resource_index(AttributeInstance, ContentInstance)
+    def release(self, resource):
+        idx_ai_ci = self._get_index(AttributeInstance, ContentInstance)
         for attribute_id in resource.attribute_ids:
-            idx_ai_ci.pop_index_value(attribute_id, resource)
+            idx_ai_ci.pop_indexed_value(attribute_id, resource)
 
         raise RuntimeError('TODO: AddViewTypeModel hook')
         # self._update_view_instance_content_instances()

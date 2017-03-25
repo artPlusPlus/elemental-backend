@@ -29,7 +29,7 @@ class ResourceIndex(object):
         self._eternal_keys = weakref.WeakSet()
         self._map__index_key__indexed_data = weakref.WeakKeyDictionary()
 
-    def create_index(self, key):
+    def push_index(self, key):
         try:
             key = key.id
         except AttributeError:
@@ -44,7 +44,22 @@ class ResourceIndex(object):
             value_collection = deque()
             self._map__idx_resource_id__resource_ids[key] = value_collection
 
-    def push_index_value(self, key, value):
+    def pop_index(self, key):
+        try:
+            key = key.id
+        except AttributeError:
+            key = key
+
+        try:
+            result = self._map__idx_resource_id__resource_ids.pop(key)
+        except KeyError:
+            result = NO_VALUE
+        else:
+            result = tuple(result)
+
+        return result
+
+    def push_indexed_value(self, key, value):
         try:
             key = key.id
         except AttributeError:
@@ -65,7 +80,7 @@ class ResourceIndex(object):
         while 0 < self._indexed_capacity < len(value_collection):
             value_collection.popleft()
 
-    def iter_index(self, key):
+    def iter_indexed_values(self, key):
         try:
             key = key.id
         except AttributeError:
@@ -79,22 +94,11 @@ class ResourceIndex(object):
         for item in collection:
             yield item
 
-    def pop_index(self, key):
-        try:
-            key = key.id
-        except AttributeError:
-            key = key
+    def move_indexed_value(self, value, source_key, target_key):
+        self.remove(source_key, value)
+        self.add(target_key, value)
 
-        try:
-            result = self._map__idx_resource_id__resource_ids.pop(key)
-        except KeyError:
-            result = NO_VALUE
-        else:
-            result = tuple(result)
-
-        return result
-
-    def pop_index_value(self, key, value):
+    def pop_indexed_value(self, key, value):
         try:
             key = key.id
         except AttributeError:
@@ -111,10 +115,6 @@ class ResourceIndex(object):
             return None
         else:
             return value
-
-    def move_index_value(self, value, source_key, target_key):
-        self.remove(source_key, value)
-        self.add(target_key, value)
 
     def _set_eternal_key(self, current_key, eternal_key):
         """

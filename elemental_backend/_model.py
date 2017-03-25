@@ -20,8 +20,7 @@ from .errors import (
     ResourceNotRegisteredError,
     ResourceCollisionError,
     ResourceNotReleasedError,
-    ResourceNotRetrievedError,
-    ResourceIndexNotFoundError
+    ResourceNotRetrievedError
 )
 
 
@@ -39,10 +38,6 @@ class Model(object):
     resource_released = Hook()
     resource_release_failed = Hook()
 
-    @property
-    def index__resource_cls__resources(self):
-        return self._map__resource_cls__resources
-
     def __init__(self):
         """
         Constructor for a `Model` instance.
@@ -58,11 +53,20 @@ class Model(object):
         self._map__resource_cls__resources = weakref.WeakKeyDictionary()
         self._map__resource__stale_dependencies = weakref.WeakKeyDictionary()
 
-        for resource_model in iter_subclasses(ResourceModelBase):
-            resource_cls = resource_model.__resource_cls__
-            resource_indexes = resource_model.__resource_indexes__
+        for resource_model_cls in iter_subclasses(ResourceModelBase):
+            resource_cls = resource_model_cls.__resource_cls__
+            resource_indexes = resource_model_cls.__resource_indexes__
 
-            self._resource_models[resource_cls] = resource_model(self)
+            resource_model = resource_model_cls(
+                weakref.WeakMethod(self._resources.get),
+                weakref.WeakMethod(self._resource_indexes.get))
+            self.resource_registered += resource_model.resource_registered_handler
+            self.resource_registration_failed += resource_model.resource_registration_failed_handler
+            self.resource_retrieved += resource_model.resource_retrieved_handler
+            self.resource_retrieval_failed += resource_model.resource_retrieval_failed_handler
+            self.resource_released += resource_model.resource_released_handler
+            self.resource_release_failed += resource_model.resource_release_failed_handler
+            self._resource_models[resource_cls] = resource_model
 
             for index in resource_indexes:
                 if index.key_type is resource_cls:
@@ -92,7 +96,8 @@ class Model(object):
             msg = msg.format(repr(resource))
 
             _LOG.error(msg)
-            raise ResourceNotRegisteredError(msg, resource_type=type(resource))
+            raise ResourceNotRegisteredError(msg,
+                                             resource_type=type(resource))
 
         if not resource_id:
             msg = (
@@ -102,8 +107,29 @@ class Model(object):
             msg = msg.format(repr(resource), resource_id)
 
             _LOG.error(msg)
-            raise ResourceNotRegisteredError(msg, resource_type=type(resource),
+            raise ResourceNotRegisteredError(msg,
+                                             resource_type=type(resource),
                                              resource_id=resource_id)
+        elif resource_id in self._resources:
+            msg = (
+                'Failed to register resource with id "{0}": '
+                'Resource already exists with id "{0}"'
+            )
+            msg = msg.format(resource.id)
+
+            _LOG.error(msg)
+            raise ResourceCollisionError(msg,
+                                         resource_type=type(resource),
+                                         resource_id=resource.id)
+
+        self._resources[resource.id] = resource
+        map_rc_rs = self._map__resource_cls__resources
+        try:
+            resource_type_resources = map_rc_rs[type(resource)]
+        except KeyError:
+            resource_type_resources = weakref.WeakSet()
+        resource_type_resources.add(resource.id)
+
 
         # The registration process iterates through all appropriate
         # ResourceModel instances, calling each model's register method.
@@ -126,7 +152,7 @@ class Model(object):
 
             if not registration_error:
                 try:
-                    resource_model.register(self, resource)
+                    resource_model.register(resource)
                     model_idx += 1
                 except ResourceCollisionError as e:
                     raise e
@@ -139,7 +165,7 @@ class Model(object):
                     problem_model = resource_model
             else:
                 try:
-                    resource_model.release(self, resource)
+                    resource_model.release(resource)
                 except Exception as e:
                     msg = '"{0}" release failed - "{1}"'
                     msg = msg.format(resource_model.__name__, e)
@@ -148,11 +174,11 @@ class Model(object):
 
         if not registration_error:
             try:
-                self.resource_registered(self, resource)
+                self.resource_registered(resource)
             except Exception as e:
                 registration_error = e
                 try:
-                    self.resource_registration_failed(self, resource)
+                    self.resource_registration_failed(resource)
                 except Exception as e:
                     release_errors.append(e)
 
@@ -239,8 +265,7 @@ class Model(object):
             resource_model = resource_models.pop(0)
 
             try:
-                result = resource_model.retrieve(self, resource_id,
-                                                 resource=result)
+                result = resource_model.retrieve(resource_id, resource=result)
             except ResourceNotFoundError:
                 raise
             except Exception as e:
@@ -306,7 +331,8 @@ class Model(object):
             raise ValueError(msg)
 
         try:
-            result = self._resources[resource_id]
+            result = self._resources.pop(resource_id)
+            self._map__resource_cls__resources[type(result)].discard(result)
         except KeyError:
             msg = (
                 'Failed to release resource:'
@@ -340,7 +366,7 @@ class Model(object):
 
             if not release_error:
                 try:
-                    resource_model.release(self, result)
+                    resource_model.release(result)
                     model_idx -= 1
                 except ResourceCollisionError as e:
                     raise e
@@ -353,7 +379,7 @@ class Model(object):
                     problem_model = resource_model
             else:
                 try:
-                    resource_model.register(self, result)
+                    resource_model.register(result)
                 except Exception as e:
                     msg = '"{0}" release failed - "{1}"'
                     msg = msg.format(resource_model.__name__, e)
@@ -415,29 +441,5 @@ class Model(object):
         for resource_cls, resource_model in self._resource_models.iteritems():
             if isinstance(resource, resource_cls):
                 result[resource_cls] = resource_model
-
-        return result
-
-    def add_resource(self, resource):
-        self._resources[resource.id] = resource
-
-    def has_resource(self, resource):
-        return resource.id in self._resources
-
-    def get_resource(self, resource_id):
-        return self._resources[resource_id]
-
-    def remove_resource(self, resource):
-        del self._resources[resource.id]
-
-    def get_resource_index(self, key_type, value_type):
-        index_key = (key_type, value_type)
-
-        try:
-            result = self._resource_indexes[index_key]
-        except KeyError:
-            msg = 'No index exists with key-type "{0}" and value-type "{1}".'
-            msg = msg.format(key_type, value_type)
-            raise ResourceIndexNotFoundError(msg)
 
         return result
