@@ -39,11 +39,6 @@ class Resource(ElementalBase):
         if value is not self._id_changed:
             raise TypeError('id_changed cannot be set')
 
-    @id_changed.setter
-    def id_changed(self, value):
-        if value is not self._id_changed:
-            raise TypeError('id_changed cannot be set')
-
     def __init__(self, id=None):
         """
         Initializes a new `Resource` instance.

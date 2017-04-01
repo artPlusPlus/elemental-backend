@@ -1,11 +1,15 @@
 from collections import namedtuple
 
-from ._hook import Hook
+from elemental_core import Hook
 
 
 PropertyChangedData = namedtuple(
     'PropertyChangedEventArgs',
-    ['original_value', 'current_value'])
+    [
+        'original_value',
+        'current_value'
+    ]
+)
 
 
 class PropertyChangedHook(Hook):
