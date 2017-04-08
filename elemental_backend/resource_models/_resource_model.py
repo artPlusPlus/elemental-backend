@@ -1,4 +1,6 @@
 import logging
+from typing import Union
+from uuid import UUID
 
 from .._resource_model_base import ResourceModelBase
 from ..resources import Resource
@@ -14,15 +16,19 @@ class ResourceModel(ResourceModelBase):
     __resource_cls__ = Resource
     __resource_indexes__ = tuple()
 
-    def register(self, resource):
+    def register(self,
+                 resource: Resource):
         hook = resource.id_changed
         handler = self._handle_resource_id_changed
         hook.add_handler(handler)
 
-    def retrieve(self, resource_id, resource=None):
+    def retrieve(self,
+                 resource_id: UUID,
+                 resource: Union[None, Resource] = None):
         return resource
 
-    def release(self, resource):
+    def release(self,
+                resource: Resource):
         hook = resource.id_changed
         handler = self._handle_resource_id_changed
         hook.remove_handler(handler)

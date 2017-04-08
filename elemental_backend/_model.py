@@ -8,10 +8,8 @@ Todo
 import logging
 import weakref
 
-from elemental_core.util import (
-    process_uuid_value,
-    Hook
-)
+from elemental_core import Hook
+from elemental_core.util import process_uuid_value
 
 from ._resource_model_base import ResourceModelBase
 from ._util import iter_subclasses
@@ -129,7 +127,6 @@ class Model(object):
         except KeyError:
             resource_type_resources = weakref.WeakSet()
         resource_type_resources.add(resource.id)
-
 
         # The registration process iterates through all appropriate
         # ResourceModel instances, calling each model's register method.

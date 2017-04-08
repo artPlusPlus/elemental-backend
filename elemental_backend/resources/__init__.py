@@ -1,4 +1,7 @@
 from ._resource import Resource
+
+from ._immutable_type_resource import ImmutableTypeResource
+
 from ._resource_type import ResourceType
 from ._resource_instance import ResourceInstance
 from ._content_type import ContentType
