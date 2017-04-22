@@ -3,14 +3,16 @@ from elemental_core import Hook, ValueChangedHookData
 from ._immutable_instance_resource import ImmutableInstanceResource
 
 
-class ValueDataInstanceResource(ImmutableInstanceResource):
+class DataInstanceResource(ImmutableInstanceResource):
     @property
     def content(self):
         return self._content
 
     @content.setter
     def content(self, value):
-        if value == self._content:
+        if value is self._content:
+            return
+        elif value == self._content:
             return
 
         original_value = self._content
@@ -19,7 +21,7 @@ class ValueDataInstanceResource(ImmutableInstanceResource):
         self._on_content_changed(original_value, self._content)
 
     def __init__(self):
-        super(ValueDataInstanceResource, self).__init__()
+        super(DataInstanceResource, self).__init__()
 
         self._content = None
 

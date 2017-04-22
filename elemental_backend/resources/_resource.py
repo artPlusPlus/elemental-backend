@@ -1,7 +1,8 @@
 from elemental_core import (
     ElementalBase,
     Hook,
-    ValueChangedHookData
+    ValueChangedHookData,
+    NO_VALUE
 )
 from elemental_core.util import process_uuid_value
 
@@ -10,6 +11,7 @@ class Resource(ElementalBase):
     """
     Base class for content data.
     """
+    id_changed = Hook()
 
     @property
     def id(self):
@@ -46,10 +48,49 @@ class Resource(ElementalBase):
 
         self._id = None
 
-        self.id_changed = Hook()
-
         self.id = id
 
     def _on_id_changed(self, original_value, current_value):
         data = ValueChangedHookData(original_value, current_value)
         self._id_changed(self, data)
+
+    def _set_data_id(
+            self, value, data_id_attr, data_ref,
+            content_changed_handler, on_data_id_changed, on_data_content_changed):
+        value = process_uuid_value(value)
+
+        if value == getattr(self, data_id_attr):
+            return
+
+        original_data_content = self._disconnect_from_data_ref(
+            data_ref, content_changed_handler)
+
+        original_value = getattr(self, data_id_attr)
+        setattr(self, data_id_attr, value)
+
+        current_data_content = self._connect_to_data_ref(
+            data_ref, content_changed_handler)
+
+        on_data_id_changed(original_value, value)
+        if original_data_content != current_data_content:
+            on_data_content_changed(original_data_content, current_data_content)
+
+    @staticmethod
+    def _disconnect_from_data_ref(ref, content_changed_handler):
+        data_content = NO_VALUE
+        data = ref()
+        if data:
+            data.content_changed -= content_changed_handler
+            data_content = data.content
+
+        return data_content
+
+    @staticmethod
+    def _connect_to_data_ref(ref, content_changed_handler):
+        data_content = NO_VALUE
+        data = ref()
+        if data:
+            data.content_changed += content_changed_handler
+            data_content = data.content
+
+        return data_content

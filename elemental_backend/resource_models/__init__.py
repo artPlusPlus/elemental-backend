@@ -2,6 +2,14 @@ from ._resource_model import ResourceModel
 from ._resource_type_model import ResourceTypeModel
 from ._resource_instance_model import ResourceInstanceModel
 
+from ._data_type_resource_model import DataTypeResourceModel
+from ._data_instance_resource_model import DataInstanceResourceModel
+
+from ._immutable_field_type_resource_model import ImmutableFieldTypeResourceModel
+from ._immutable_field_instance_resource_model import ImmutableFieldInstanceResourceModel
+
+
+
 from ._content_type_model import ContentTypeModel
 from ._content_instance_model import ContentInstanceModel
 

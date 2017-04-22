@@ -171,11 +171,11 @@ class Model(object):
 
         if not registration_error:
             try:
-                self.resource_registered(resource)
+                self.resource_registered(self, resource)
             except Exception as e:
                 registration_error = e
                 try:
-                    self.resource_registration_failed(resource)
+                    self.resource_registration_failed(self, resource)
                 except Exception as e:
                     release_errors.append(e)
 

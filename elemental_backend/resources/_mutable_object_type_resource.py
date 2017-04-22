@@ -1,15 +1,18 @@
 from elemental_core import (
+    ForwardReference,
     Hook,
     ValueChangedHookData
 )
 from elemental_core.util import process_uuid_value
 
 from ._mutable_type_resource import MutableTypeResource
-from ._resource_reference import ResourceReference
 
 
 class MutableObjectTypeResource(MutableTypeResource):
-    @ResourceReference
+    extends_type_ids_value_id_changed = Hook()
+    field_type_ids_value_id_changed = Hook()
+
+    @ForwardReference
     def extends_type_ids_value(self):
         return self._extends_type_ids_value_id
 
@@ -30,7 +33,7 @@ class MutableObjectTypeResource(MutableTypeResource):
         self._on_extends_type_ids_value_id_changed(original_value,
                                                    self._extends_type_ids_value_id)
 
-    @ResourceReference
+    @ForwardReference
     def field_type_ids_value(self):
         return self._field_type_ids_value_id
 
@@ -56,9 +59,6 @@ class MutableObjectTypeResource(MutableTypeResource):
 
         self._extends_type_ids_value_id = None
         self._field_type_ids_value_id = None
-
-        self.extends_type_ids_value_id_changed = Hook()
-        self.field_type_ids_value_id_changed = Hook()
 
     def _on_extends_type_ids_value_id_changed(self, original_value, current_value):
         data = ValueChangedHookData(original_value, current_value)

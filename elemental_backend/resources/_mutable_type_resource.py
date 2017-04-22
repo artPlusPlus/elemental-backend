@@ -1,17 +1,20 @@
 from elemental_core import (
+    ForwardReference,
     Hook,
     ValueChangedHookData
 )
 from elemental_core.util import process_uuid_value
 
 from ._mutable_resource import MutableResource
-from ._resource_reference import ResourceReference
 
 
 class MutableTypeResource(MutableResource):
-    @ResourceReference
-    def label_value(self):
-        return self._label_value_id
+    label_value_id_changed = Hook()
+    label_changed = Hook()
+    doc_value_id_changed = Hook()
+    doc_changed = Hook()
+
+    label_value_ref = ForwardReference()
 
     @property
     def label_value_id(self):
@@ -28,7 +31,7 @@ class MutableTypeResource(MutableResource):
 
         self._on_label_value_id_changed(original_value, value)
 
-    @ResourceReference
+    @ForwardReference
     def doc_value(self):
         return self._doc_value_id
 
@@ -53,8 +56,14 @@ class MutableTypeResource(MutableResource):
         self._label_value_id = None
         self._doc_value_id = None
 
-        self.label_value_id_changed = Hook()
-        self.doc_value_id_changed = Hook()
+    @label_value_ref.key_getter
+    def get_label_value_key(self):
+        return self._label_value_id
+
+    @label_value_ref.populated
+    def _label_value_ref_populated(self, value):
+        value.content_changed += self._handle_value_data_content_changed
+        self._on_value_data_content_changed(NO_VALUE, value.content)
 
     def _on_label_value_id_changed(self, original_value, current_value):
         data = ValueChangedHookData(original_value, current_value)

@@ -1,15 +1,17 @@
 from elemental_core import (
+    ForwardReference,
     Hook,
     ValueChangedHookData
 )
 from elemental_core.util import process_uuid_value
 
 from ._resource import Resource
-from ._resource_reference import ResourceReference
 
 
 class MutableInstanceResource(Resource):
-    @ResourceReference
+    resource_type_id_changed = Hook()
+
+    @ForwardReference
     def resource_type(self):
         return self._resource_type_id
 
@@ -34,8 +36,6 @@ class MutableInstanceResource(Resource):
         super(MutableInstanceResource, self).__init__()
 
         self._resource_type_id = None
-
-        self.resource_type_id_changed = Hook()
 
     def _on_resource_type_id_changed(self, original_value, current_value):
         data = ValueChangedHookData(original_value, current_value)

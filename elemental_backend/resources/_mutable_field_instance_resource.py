@@ -1,16 +1,18 @@
 from elemental_core import (
+    ForwardReference,
     Hook,
     ValueChangedHookData
 )
 from elemental_core.util import process_uuid_value
 
 from ._mutable_instance_resource import MutableInstanceResource
-from ._resource_reference import ResourceReference
 
 
 class MutableFieldInstanceResource(MutableInstanceResource):
-    @ResourceReference
-    def value(self):
+    value_id_changed = Hook()
+
+    @ForwardReference
+    def value_ref(self):
         return self._value_id
 
     @property
@@ -33,8 +35,6 @@ class MutableFieldInstanceResource(MutableInstanceResource):
         super(MutableFieldInstanceResource, self).__init__()
 
         self._value_id = None
-
-        self.value_id_changed = Hook()
 
         self.value_id = value_id
 
