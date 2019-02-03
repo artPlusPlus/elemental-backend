@@ -1,7 +1,7 @@
-from ._immutable_type_resource import ImmutableTypeResource
+from ._resource import Resource
 
 
-class DataTypeResource(ImmutableTypeResource):
+class DataTypeResource(Resource):
     """
     Used by `ImmutableFieldTypes` to enable use of `ResourceReference` Fields.
 

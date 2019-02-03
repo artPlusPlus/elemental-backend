@@ -1,6 +1,4 @@
 import logging
-from typing import Union
-from uuid import UUID
 
 from .._resource_model_base import ResourceModelBase
 from ..resources import ImmutableTypeResource
@@ -13,38 +11,24 @@ class ImmutableTypeResourceModel(ResourceModelBase):
     __resource_cls__ = ImmutableTypeResource
     __resource_indexes__ = tuple()
 
-    def register(self,
-                 resource: ImmutableTypeResource):
-        hook = resource.label_changed
-        hook += self._handle_resource_label_changed
+    def _init_hook_forward_reference_map(self):
+        super(ImmutableTypeResourceModel, self)._init_hook_forward_reference_map()
 
-        hook = resource.extends_resource_ids_changed
-        hook += self._handle_resource_extends_resource_ids_changed
+        hook = self.__resource_cls__.label_data_id_changed
+        ref = self.__resource_cls__.label_data_ref
+        self._map__hook__forward_reference[hook] = ref
 
-        hook = resource.doc_changed
-        hook += self._handle_resource_doc_changed
+        hook = self.__resource_cls__.doc_data_id_changed
+        ref = self.__resource_cls__.doc_data_ref
+        self._map__hook__forward_reference[hook] = ref
 
-    def retrieve(self,
-                 resource_id: UUID,
-                 resource: Union[None, ImmutableTypeResource] = None):
-        return resource
+    def _init_forward_reference_resolver_map(self):
+        super(ImmutableTypeResourceModel, self)._init_forward_reference_resolver_map()
 
-    def release(self,
-                resource: ImmutableTypeResource):
-        hook = resource.label_changed
-        hook -= self._handle_resource_label_changed
+        ref = self.__resource_cls__.label_data_ref
+        resolver = self._get_resource
+        self._map__forward_reference__resolver[ref] = resolver
 
-        hook = resource.extends_resource_ids_changed
-        hook -= self._handle_resource_extends_resource_ids_changed
-
-        hook = resource.doc_changed
-        hook -= self._handle_resource_doc_changed
-
-    def _handle_resource_label_changed(self):
-        pass
-
-    def _handle_resource_extends_resource_ids_changed(self):
-        pass
-
-    def _handle_resource_doc_changed(self):
-        pass
+        ref = self.__resource_cls__.doc_data_ref
+        resolver = self._get_resource
+        self._map__forward_reference__resolver[ref] = resolver

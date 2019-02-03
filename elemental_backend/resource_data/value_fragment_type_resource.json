@@ -1,0 +1,27 @@
+[
+  {
+    "type": "ValueFragmentTypeResource",
+    "id": "1b470d07-fdf7-4e90-845e-63d0011bbc84",
+    "label_data_id": "f182332d-8630-4790-a33d-fa32666a870b",
+    "extends_type_ids_data_id": "2e46e322-c37b-4d32-91e2-68a4aae67402",
+    "field_type_ids_data_id": "92219279-e8fb-4ba1-856b-427927d885a3"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "f182332d-8630-4790-a33d-fa32666a870b",
+    "content": "BaseValueFragmentType"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "2e46e322-c37b-4d32-91e2-68a4aae67402",
+    "content": []
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "92219279-e8fb-4ba1-856b-427927d885a3",
+    "content": []
+  }
+]

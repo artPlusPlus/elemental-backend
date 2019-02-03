@@ -1,6 +1,7 @@
 from elemental_core import (
     Hook,
-    ValueChangedHookData
+    ValueChangedHookData,
+    ForwardReference
 )
 from elemental_core.util import process_uuids_value
 
@@ -9,7 +10,10 @@ from ._resource_reference import ResourceReference
 
 
 class ImmutableObjectInstanceResource(ImmutableInstanceResource):
-    @ResourceReference
+    field_instance_ids_changed = Hook()
+
+    field_instance_ids_value_ref = ForwardReference()
+
     def field_instances(self):
         return self._field_instance_ids
 
@@ -35,7 +39,9 @@ class ImmutableObjectInstanceResource(ImmutableInstanceResource):
 
         self._field_instance_ids = tuple()
 
-        self.field_instance_ids_changed = Hook()
+    @field_instance_ids_value_ref.key_getter
+    def _field_instance_ids_value_id_getter(self):
+        return self._field_instance_ids_value_id
 
     def _on_field_instance_ids_changed(self, original_value, current_value):
         data = ValueChangedHookData(original_value, current_value)

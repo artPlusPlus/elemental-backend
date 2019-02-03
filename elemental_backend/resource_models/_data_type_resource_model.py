@@ -13,16 +13,3 @@ class DataTypeResourceModel(ResourceModelBase):
     __resource_cls__ = DataTypeResource
     __resource_indexes__ = tuple()
 
-    def register(self,
-                 resource: DataTypeResource):
-        pass
-
-    def retrieve(self,
-                 resource_id: UUID,
-                 resource: DataTypeResource = None
-                 ) -> Optional[DataTypeResource]:
-        return resource
-
-    def release(self,
-                resource: DataTypeResource):
-        pass

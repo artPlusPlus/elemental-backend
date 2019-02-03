@@ -9,6 +9,10 @@ from ._resource_reference import ResourceReference
 
 
 class ValueInstanceResource(ImmutableInstanceResource):
+    start_fragment_changed = Hook()
+
+
+
     @ResourceReference
     def start_fragment(self):
         return self._start_fragment_id
@@ -34,7 +38,7 @@ class ValueInstanceResource(ImmutableInstanceResource):
 
         self._start_fragment_id = None
 
-        self.start_fragment_changed = Hook()
+
 
     def _on_start_fragment_id_changed(self, original_value, current_value):
         data = ValueChangedHookData(original_value, current_value)

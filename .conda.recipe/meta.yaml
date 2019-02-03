@@ -1,9 +1,14 @@
 package:
   name: elemental-backend
-  version: "0.4.0.dev0"
+  version: "0.4.0"
 
 source:
   path: ../
+
+build:
+  number: 0
+  skip: True  # [py2k]
+  script: python setup.py install --single-version-externally-managed --record record.txt
 
 requirements:
   build:
@@ -11,10 +16,12 @@ requirements:
     - setuptools
     - elemental-core
     - elemental-kinds
+    - marshmallow
   run:
     - python
     - elemental-core
     - elemental-kinds
+    - marshmallow
 
 test:
   requires:

@@ -50,6 +50,14 @@ class Resource(ElementalBase):
 
         self.id = id
 
+    @classmethod
+    def iter_hooks(cls):
+        pass
+
+    @classmethod
+    def iter_forward_references(cls):
+        pass
+
     def _on_id_changed(self, original_value, current_value):
         data = ValueChangedHookData(original_value, current_value)
         self._id_changed(self, data)

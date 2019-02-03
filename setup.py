@@ -39,7 +39,9 @@ keywords = 'elemental cms backend'
 
 packages = find_packages(exclude=('tests', 'docs', 'scratch'))
 
-install_requires = []
+install_requires = [
+    'marshmallow'
+]
 extras_require = {
     'test': [
         'pytest'

@@ -1,9 +1,9 @@
 from elemental_core import Hook, ValueChangedHookData
 
-from ._immutable_instance_resource import ImmutableInstanceResource
+from ._resource import Resource
 
 
-class DataInstanceResource(ImmutableInstanceResource):
+class DataInstanceResource(Resource):
     @property
     def content(self):
         return self._content

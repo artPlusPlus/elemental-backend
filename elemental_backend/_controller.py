@@ -3,9 +3,7 @@ import weakref
 from collections import deque
 
 from elemental_core import ElementalError
-from elemental_core.util import (
-    process_elemental_class_value
-)
+from elemental_core.util import process_elemental_class_value
 
 from .transactions import Actions
 from ._controller_events import ControllerEvents
@@ -21,13 +19,9 @@ from .errors import (
     ResourceNotCreatedError,
     ResourceNotRegisteredError,
     ResourceNotUpdatedError,
-    ResourceNotDeletedError
+    ResourceNotDeletedError,
 )
-from ._util import (
-    process_serializer_key,
-    process_deserializer_key,
-    process_handler_key
-)
+from ._util import process_serializer_key, process_deserializer_key, process_handler_key
 
 _LOG = logging.getLogger(__name__)
 
@@ -66,28 +60,29 @@ class Controller(object):
             only acts to identify and track the function for future use by
             the `Controller` instance.
         """
+
         def wrap(func):
             key = process_serializer_key(resource_type, data_format)
             if not key:
                 msg = (
                     'Failed to register "{0}.{1}" as a serializer: '
-                    'Invalid resource type or data format.'
+                    "Invalid resource type or data format."
                 )
                 msg = msg.format(func.__module__, func.__name__)
 
                 _LOG.error(msg)
-                raise InvalidSerializerKeyError(msg,
-                                                resource_type=resource_type,
-                                                data_format=data_format)
+                raise InvalidSerializerKeyError(
+                    msg, resource_type=resource_type, data_format=data_format
+                )
 
             self._serializers[key] = func
 
             msg = 'Registered "{0}.{1}" as the "{2}" serializer to "{3}"'
-            msg = msg.format(func.__module__, func.__name__,
-                             key[0].__name__, data_format)
+            msg = msg.format(func.__module__, func.__name__, key[0].__name__, data_format)
             _LOG.info(msg)
 
             return func
+
         return wrap
 
     def deserializer(self, resource_type, data_format):
@@ -114,28 +109,29 @@ class Controller(object):
             only acts to identify and track the function for future use by
             the `Controller` instance.
         """
+
         def wrap(func):
             key = process_deserializer_key(resource_type, data_format)
             if not key:
                 msg = (
                     'Failed to register "{0}.{1}" as a serializer: '
-                    'Invalid resource type or data format.'
+                    "Invalid resource type or data format."
                 )
                 msg = msg.format(func.__module__, func.__name__)
 
                 _LOG.error(msg)
-                raise InvalidDeserializerKeyError(msg,
-                                                  resource_type=resource_type,
-                                                  data_format=data_format)
+                raise InvalidDeserializerKeyError(
+                    msg, resource_type=resource_type, data_format=data_format
+                )
 
             self._deserializers[key] = func
 
             msg = 'Registered "{0}.{1}" as the "{2}" deserializer from "{3}"'
-            msg = msg.format(func.__module__, func.__name__,
-                             key[0].__name__, data_format)
+            msg = msg.format(func.__module__, func.__name__, key[0].__name__, data_format)
             _LOG.info(msg)
 
             return func
+
         return wrap
 
     def handler(self, event, action=None, resource_type=None):
@@ -167,12 +163,13 @@ class Controller(object):
             only acts to identify and track the function for future use by
             the `Controller` instance.
         """
+
         def wrap(func):
             key = process_handler_key(event, action, resource_type)
             if not key:
                 msg = (
                     'Failed to register "{0}.{1}" as a handler: '
-                    'Invalid event, action, or resource_type.'
+                    "Invalid event, action, or resource_type."
                 )
                 msg = msg.format(func.__module__, func.__name__)
 
@@ -191,6 +188,7 @@ class Controller(object):
             _LOG.info(msg)
 
             return func
+
         return wrap
 
     def import_resource(self, resource_type, resource_data, data_format):
@@ -212,28 +210,29 @@ class Controller(object):
         deserializer_key = process_deserializer_key(resource_type, data_format)
         if not deserializer_key:
             msg = (
-                'Failed to import resource: '
+                "Failed to import resource: "
                 'Invalid resource type ("{0}") or data format ("{1}").'
             )
             msg = msg.format(resource_type, data_format)
 
             _LOG.error(msg)
-            raise InvalidDeserializerKeyError(msg,
-                                              resource_type=resource_type,
-                                              data_format=data_format)
+            raise InvalidDeserializerKeyError(
+                msg, resource_type=resource_type, data_format=data_format
+            )
 
         try:
             deserializer = self._deserializers[deserializer_key]
         except KeyError:
             msg = (
-                'Failed to import resource: No deserializer found for '
+                "Failed to import resource: No deserializer found for "
                 'resource type "{0}" and data format "{1}".'
             )
             msg = msg.format(repr(resource_type), data_format)
 
             _LOG.error(msg)
-            raise DeserializerNotFoundError(msg, resource_type=resource_type,
-                                            data_format=data_format)
+            raise DeserializerNotFoundError(
+                msg, resource_type=resource_type, data_format=data_format
+            )
 
         resource_type = process_elemental_class_value(resource_type)
         resource = resource_type()
@@ -260,7 +259,7 @@ class Controller(object):
         try:
             resource = self._model.retrieve_resource(resource_id)
         except (ValueError, ResourceNotFoundError) as e:
-            msg = 'Failed to export resource: {0}'.format(e)
+            msg = "Failed to export resource: {0}".format(e)
 
             _LOG.error(msg)
             raise e
@@ -268,28 +267,29 @@ class Controller(object):
         serializer_key = process_serializer_key(type(resource), data_format)
         if not serializer_key:
             msg = (
-                'Failed to export resource: '
+                "Failed to export resource: "
                 'Invalid resource type ("{0}") or data format ("{1}").'
             )
             msg = msg.format(type(resource), data_format)
 
             _LOG.error(msg)
-            raise InvalidSerializerKeyError(msg,
-                                            resource_type=type(resource),
-                                            data_format=data_format)
+            raise InvalidSerializerKeyError(
+                msg, resource_type=type(resource), data_format=data_format
+            )
 
         try:
             serializer = self._serializers[serializer_key]
         except KeyError:
             msg = (
-                'Failed to resolve serializer for '
+                "Failed to resolve serializer for "
                 'resource type "{0}" and data format "{1}".'
             )
             msg = msg.format(repr(type(resource)), data_format)
 
             _LOG.error(msg)
-            raise SerializerNotFoundError(msg, resource_type=type(resource),
-                                          data_format=data_format)
+            raise SerializerNotFoundError(
+                msg, resource_type=type(resource), data_format=data_format
+            )
 
         resource_data = serializer(resource)
 
@@ -318,81 +318,81 @@ class Controller(object):
         Returns:
             The `Transaction` instance passed in.
         """
-        msg = 'Opened Transaction: {0} {1}'
+        msg = "Opened Transaction: {0} {1}"
         msg = msg.format(transaction.action, transaction.id)
         _LOG.info(msg)
 
         processes = {
-            Actions.POST: deque((
-                self._resolve_transaction_inbound_deserializer,
-                self._resolve_transaction_outbound_serializer,
-                self._create_resource,
-                self._update_resource,
-                self._register_resource
-            )),
-            Actions.GET: deque((
-                self._resolve_resource,
-                self._resolve_transaction_outbound_serializer
-            )),
-            Actions.PUT: deque((
-                self._resolve_resource,
-                self._resolve_transaction_inbound_deserializer,
-                self._resolve_transaction_outbound_serializer,
-                self._update_resource
-            )),
-            Actions.DELETE: deque((
-                self._resolve_resource,
-                self._resolve_transaction_outbound_serializer,
-                self._delete_resource
-            ))
+            Actions.POST: deque(
+                (
+                    self._resolve_transaction_inbound_deserializer,
+                    self._resolve_transaction_outbound_serializer,
+                    self._create_resource,
+                    self._update_resource,
+                    self._register_resource,
+                )
+            ),
+            Actions.GET: deque(
+                (self._resolve_resource, self._resolve_transaction_outbound_serializer)
+            ),
+            Actions.PUT: deque(
+                (
+                    self._resolve_resource,
+                    self._resolve_transaction_inbound_deserializer,
+                    self._resolve_transaction_outbound_serializer,
+                    self._update_resource,
+                )
+            ),
+            Actions.DELETE: deque(
+                (
+                    self._resolve_resource,
+                    self._resolve_transaction_outbound_serializer,
+                    self._delete_resource,
+                )
+            ),
         }
 
         try:
             processes = processes[transaction.action]
         except KeyError:
-            msg = (
-                'Failed to process Transaction "{0}": '
-                'Invalid action - "{1}"'
-            )
+            msg = 'Failed to process Transaction "{0}": ' 'Invalid action - "{1}"'
             msg = msg.format(transaction.id, transaction.action)
             e = InvalidTransactionAction(
-                msg,
-                invalid_action=transaction.action,
-                transaction=transaction)
+                msg, invalid_action=transaction.action, transaction=transaction
+            )
             transaction.errors.append(e)
         else:
             try:
                 self._process_transaction(transaction, processes)
             except Exception as e:
-                msg = (
-                    'Failed to process Transaction "{0}": '
-                    'Unexpected error - {1}'
-                )
+                msg = 'Failed to process Transaction "{0}": ' "Unexpected error - {1}"
                 msg = msg.format(transaction.id, e)
-                e = TransactionError(msg, inner_error=e,
-                                     transaction=transaction)
+                e = TransactionError(msg, inner_error=e, transaction=transaction)
                 transaction.errors.append(e)
 
         for error in transaction.errors:
             _LOG.error(error.message)
 
-        if all([not transaction.errors,
+        if all(
+            [
+                not transaction.errors,
                 transaction.target_resource,
-                transaction.outbound_format]):
+                transaction.outbound_format,
+            ]
+        ):
             serializer = transaction.outbound_serializer
             resource = transaction.target_resource
             payload = serializer(resource)
             transaction.outbound_payload = payload
 
-        msg = 'Closed Transaction: {0} {1}'
+        msg = "Closed Transaction: {0} {1}"
         msg = msg.format(transaction.action, transaction.id)
         _LOG.info(msg)
 
         return transaction
 
     def _process_transaction(self, transaction, processes):
-        self._invoke_handlers(ControllerEvents.transaction_opened,
-                              transaction)
+        self._invoke_handlers(ControllerEvents.transaction_opened, transaction)
 
         while processes and not transaction.errors:
             process = processes.popleft()
@@ -403,19 +403,15 @@ class Controller(object):
             except Exception as e:
                 msg = 'Failed to process Transaction "{0}": {1}'
                 msg = msg.format(transaction.id, e)
-                e = TransactionError(msg, inner_error=e,
-                                     transaction=transaction)
+                e = TransactionError(msg, inner_error=e, transaction=transaction)
                 transaction.errors.append(e)
 
         if transaction.errors:
-            self._invoke_handlers(ControllerEvents.transaction_failed,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.transaction_failed, transaction)
         else:
-            self._invoke_handlers(ControllerEvents.transaction_succeeded,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.transaction_succeeded, transaction)
 
-        self._invoke_handlers(ControllerEvents.transaction_closing,
-                              transaction)
+        self._invoke_handlers(ControllerEvents.transaction_closing, transaction)
 
     def _resolve_transaction_inbound_deserializer(self, transaction):
         transaction.inbound_deserializer = None
@@ -423,7 +419,7 @@ class Controller(object):
         if not transaction.resource_type:
             msg = (
                 'Transaction "{0}" inbound deserializer not resolved: '
-                'Transaction has no resource type'
+                "Transaction has no resource type"
             )
             msg = msg.format(transaction.id)
             _LOG.debug(msg)
@@ -431,7 +427,7 @@ class Controller(object):
         if not transaction.inbound_format:
             msg = (
                 'Transaction "{0}" inbound serializer not resolved: '
-                'Transaction has no inbound format'
+                "Transaction has no inbound format"
             )
             msg = msg.format(transaction.inbound_format)
             _LOG.debug(msg)
@@ -439,20 +435,23 @@ class Controller(object):
         if not all([transaction.resource_type, transaction.inbound_format]):
             return
 
-        deserializer_key = process_deserializer_key(transaction.resource_type,
-                                                    transaction.inbound_format)
+        deserializer_key = process_deserializer_key(
+            transaction.resource_type, transaction.inbound_format
+        )
         if not deserializer_key:
             msg = (
                 'Failed to process Transaction "{0}": '
                 'Invalid resource type ("{1}") or data format ("{2}").'
             )
-            msg = msg.format(transaction.id, transaction.resource_type,
-                             transaction.inbound_format)
+            msg = msg.format(
+                transaction.id, transaction.resource_type, transaction.inbound_format
+            )
 
             raise InvalidDeserializerKeyError(
                 msg,
                 resource_type=transaction.resource_type,
-                data_format=transaction.inbound_format)
+                data_format=transaction.inbound_format,
+            )
 
         try:
             deserializer = self._deserializers[deserializer_key]
@@ -461,13 +460,15 @@ class Controller(object):
                 'Failed to process Transaction "{0}": '
                 'No deserializer for resource type "{1}" and data format "{2}".'
             )
-            msg = msg.format(transaction.id, transaction.resource_type,
-                             transaction.inbound_format)
+            msg = msg.format(
+                transaction.id, transaction.resource_type, transaction.inbound_format
+            )
 
             raise DeserializerNotFoundError(
                 msg,
                 resource_type=transaction.resource_type,
-                data_format=transaction.inbound_format)
+                data_format=transaction.inbound_format,
+            )
         else:
             transaction.inbound_deserializer = deserializer
 
@@ -477,7 +478,7 @@ class Controller(object):
         if not transaction.resource_type:
             msg = (
                 'Transaction "{0}" outbound serializer not resolved: '
-                'Transaction has no resource type'
+                "Transaction has no resource type"
             )
             msg = msg.format(transaction.id)
             _LOG.debug(msg)
@@ -485,7 +486,7 @@ class Controller(object):
         if not transaction.outbound_format:
             msg = (
                 'Transaction "{0}" outbound serializer not resolved: '
-                'Transaction has no outbound format'
+                "Transaction has no outbound format"
             )
             msg = msg.format(transaction.outbound_format)
             _LOG.debug(msg)
@@ -493,19 +494,22 @@ class Controller(object):
         if not all([transaction.resource_type, transaction.outbound_format]):
             return
 
-        serializer_key = process_serializer_key(transaction.resource_type,
-                                                transaction.outbound_format)
+        serializer_key = process_serializer_key(
+            transaction.resource_type, transaction.outbound_format
+        )
         if not serializer_key:
             msg = (
                 'Failed to process Transaction "{0}": '
                 'Invalid resource type ("{1}") or data format ("{2}").'
             )
-            msg = msg.format(transaction.id, transaction.resource_type,
-                             transaction.inbound_format)
+            msg = msg.format(
+                transaction.id, transaction.resource_type, transaction.inbound_format
+            )
             raise InvalidSerializerKeyError(
                 msg,
                 resource_type=transaction.resource_type,
-                data_format=transaction.inbound_format)
+                data_format=transaction.inbound_format,
+            )
 
         try:
             serializer = self._serializers[serializer_key]
@@ -514,12 +518,14 @@ class Controller(object):
                 'Failed to process Transaction "{0}": '
                 'No serializer for resource type "{1}" and data format "{2}".'
             )
-            msg = msg.format(transaction.id, transaction.resource_type,
-                             transaction.inbound_format)
+            msg = msg.format(
+                transaction.id, transaction.resource_type, transaction.inbound_format
+            )
             raise SerializerNotFoundError(
                 msg,
                 resource_type=transaction.resource_type,
-                data_format=transaction.inbound_format)
+                data_format=transaction.inbound_format,
+            )
         else:
             transaction.outbound_serializer = serializer
 
@@ -527,10 +533,7 @@ class Controller(object):
         resource_id = transaction.resource_id
 
         if not resource_id:
-            msg = (
-                'Resource not resolved: '
-                'Transaction has no resource id'
-            )
+            msg = "Resource not resolved: " "Transaction has no resource id"
             e = ResourceNotFoundError(msg)
             transaction.errors.append(e)
         else:
@@ -539,10 +542,9 @@ class Controller(object):
             except Exception as e:
                 transaction.target_resource = None
 
-                msg = 'Resource not resolved: {0} - {1}'
+                msg = "Resource not resolved: {0} - {1}"
                 msg = msg.format(type(e).__name__, e)
-                e = ResourceNotFoundError(msg, inner_error=e,
-                                          resource_id=resource_id)
+                e = ResourceNotFoundError(msg, inner_error=e, resource_id=resource_id)
                 transaction.errors.append(e)
             else:
                 transaction.target_resource = resource
@@ -551,20 +553,15 @@ class Controller(object):
                 _LOG.debug(msg)
 
         if transaction.errors:
-            self._invoke_handlers(ControllerEvents.resource_not_resolved,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_not_resolved, transaction)
         else:
-            self._invoke_handlers(ControllerEvents.resource_resolved,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_resolved, transaction)
 
     def _create_resource(self, transaction):
         resource_type = transaction.resource_type
 
         if not resource_type:
-            msg = (
-                'Resource not created: '
-                'Transaction has no resource type'
-            )
+            msg = "Resource not created: " "Transaction has no resource type"
             e = ResourceNotCreatedError(msg)
             transaction.errors.append(e)
         else:
@@ -573,10 +570,11 @@ class Controller(object):
             except Exception as e:
                 transaction.target_resource = None
 
-                msg = 'Resource not created: {0} - {1}'
+                msg = "Resource not created: {0} - {1}"
                 msg = msg.format(type(e).__name__, e)
-                e = ResourceNotCreatedError(msg, inner_error=e,
-                                            resource_type=resource_type)
+                e = ResourceNotCreatedError(
+                    msg, inner_error=e, resource_type=resource_type
+                )
                 transaction.errors.append(e)
             else:
                 transaction.target_resource = resource
@@ -585,42 +583,38 @@ class Controller(object):
                 _LOG.debug(msg)
 
         if transaction.errors:
-            self._invoke_handlers(ControllerEvents.resource_not_created,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_not_created, transaction)
         else:
-            self._invoke_handlers(ControllerEvents.resource_created,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_created, transaction)
 
     def _register_resource(self, transaction):
         resource = transaction.target_resource
 
         if not resource:
-            msg = (
-                'Resource not updated: '
-                'Transaction has no resource'
-            )
+            msg = "Resource not updated: " "Transaction has no resource"
             e = ResourceNotRegisteredError(msg)
             transaction.errors.append(e)
         else:
             try:
                 self._model.register_resource(resource)
             except Exception as e:
-                msg = 'Resource not registered: {0} - {1}'
+                msg = "Resource not registered: {0} - {1}"
                 msg = msg.format(type(e).__name__, e)
-                e = ResourceNotRegisteredError(msg, inner_error=e,
-                                               resource_type=repr(type(resource)),
-                                               resource_id=resource.id)
+                e = ResourceNotRegisteredError(
+                    msg,
+                    inner_error=e,
+                    resource_type=repr(type(resource)),
+                    resource_id=resource.id,
+                )
                 transaction.errors.append(e)
             else:
                 msg = 'Resource Registered: "{0}"'.format(resource.id)
                 _LOG.debug(msg)
 
         if transaction.errors:
-            self._invoke_handlers(ControllerEvents.resource_not_registered,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_not_registered, transaction)
         else:
-            self._invoke_handlers(ControllerEvents.resource_registered,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_registered, transaction)
 
     def _update_resource(self, transaction):
         deserializer = transaction.inbound_deserializer
@@ -628,94 +622,83 @@ class Controller(object):
         resource = transaction.target_resource
 
         if not deserializer:
-            msg = (
-                'Resource not updated: '
-                'Transaction has no inbound deserializer'
+            msg = "Resource not updated: " "Transaction has no inbound deserializer"
+            e = ResourceNotUpdatedError(
+                msg, resource_type=repr(type(resource)), resource_id=resource.id
             )
-            e = ResourceNotUpdatedError(msg,
-                                        resource_type=repr(type(resource)),
-                                        resource_id=resource.id)
             transaction.errors.append(e)
         elif not resource_data:
-            msg = (
-                'Resource not updated: '
-                'Transaction has no resource data'
+            msg = "Resource not updated: " "Transaction has no resource data"
+            e = ResourceNotUpdatedError(
+                msg, resource_type=repr(type(resource)), resource_id=resource.id
             )
-            e = ResourceNotUpdatedError(msg,
-                                        resource_type=repr(type(resource)),
-                                        resource_id=resource.id)
             transaction.errors.append(e)
         elif not resource:
-            msg = (
-                'Resource not updated: '
-                'Transaction has no resource'
+            msg = "Resource not updated: " "Transaction has no resource"
+            e = ResourceNotUpdatedError(
+                msg, resource_type=repr(type(resource)), resource_id=resource.id
             )
-            e = ResourceNotUpdatedError(msg,
-                                        resource_type=repr(type(resource)),
-                                        resource_id=resource.id)
             transaction.errors.append(e)
         else:
             try:
                 deserializer(resource_data, resource)
             except Exception as e:
-                msg = 'Resource not updated: {0} - {1}'
+                msg = "Resource not updated: {0} - {1}"
                 msg = msg.format(type(e).__name__, e)
-                e = ResourceNotUpdatedError(msg, inner_error=e,
-                                            resource_type=repr(type(resource)),
-                                            resource_id=resource.id)
+                e = ResourceNotUpdatedError(
+                    msg,
+                    inner_error=e,
+                    resource_type=repr(type(resource)),
+                    resource_id=resource.id,
+                )
                 transaction.errors.append(e)
             else:
                 msg = 'Resource updated: "{0}"'.format(resource.id)
                 _LOG.debug(msg)
 
         if transaction.errors:
-            self._invoke_handlers(ControllerEvents.resource_not_updated,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_not_updated, transaction)
         else:
-            self._invoke_handlers(ControllerEvents.resource_updated,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_updated, transaction)
 
     def _delete_resource(self, transaction):
         resource = transaction.target_resource
 
         if not resource:
-            msg = (
-                'Resource not deleted: '
-                'Transaction has no resource'
-            )
+            msg = "Resource not deleted: " "Transaction has no resource"
             e = ResourceNotDeletedError(msg)
             transaction.errors.append(e)
         else:
             try:
                 self._model.release_resource(transaction.resource_id)
             except Exception as e:
-                msg = 'Resource not deleted: {0} - {1}'
+                msg = "Resource not deleted: {0} - {1}"
                 msg = msg.format(type(e).__name__, e)
-                e = ResourceNotDeletedError(msg, inner_error=e,
-                                            resource_type=repr(type(resource)),
-                                            resource_id=resource.id)
+                e = ResourceNotDeletedError(
+                    msg,
+                    inner_error=e,
+                    resource_type=repr(type(resource)),
+                    resource_id=resource.id,
+                )
                 transaction.errors.append(e)
             else:
                 msg = 'Resource deleted: "{0}"'.format(resource.id)
                 _LOG.debug(msg)
 
         if transaction.errors:
-            self._invoke_handlers(ControllerEvents.resource_not_deleted,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_not_deleted, transaction)
         else:
-            self._invoke_handlers(ControllerEvents.resource_deleted,
-                                  transaction)
+            self._invoke_handlers(ControllerEvents.resource_deleted, transaction)
 
     def _invoke_handlers(self, event, transaction):
-        keys = [
-            (event, None, None),
-            (event, transaction.action, None),
-        ]
+        keys = [(event, None, None), (event, transaction.action, None)]
         if transaction.resource_type:
-            keys.extend([
-                (event, None, transaction.resource_type),
-                (event, transaction.action, transaction.resource_type)
-            ])
+            keys.extend(
+                [
+                    (event, None, transaction.resource_type),
+                    (event, transaction.action, transaction.resource_type),
+                ]
+            )
 
         for key in keys:
             key = process_handler_key(*key)

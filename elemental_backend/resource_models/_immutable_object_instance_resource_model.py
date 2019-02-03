@@ -1,14 +1,14 @@
 import logging
 
 from .._resource_model_base import ResourceModelBase
-from ..resources import ImmutableFieldInstanceResource
+from ..resources import ImmutableObjectInstanceResource
 
 
 _LOG = logging.getLogger(__name__)
 
 
 class ImmutableFieldInstanceResourceModel(ResourceModelBase):
-    __resource_cls__ = ImmutableFieldInstanceResource
+    __resource_cls__ = ImmutableObjectInstanceResource
     __resource_indexes__ = tuple()
 
     def _init_hook_forward_reference_map(self):
