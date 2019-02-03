@@ -294,3 +294,11 @@ class ResourceNotUpdatedError(ResourceError):
     Raised when an update to a `Resource` fails.
     """
     pass
+
+
+class ResourceIndexError(ElementalError):
+    pass
+
+
+class ResourceIndexNotFoundError(ResourceIndexError):
+    pass

@@ -61,7 +61,7 @@ class AttributeInstance(ResourceInstance):
                     'AttributeType "{2}" not resolved.'
                 )
                 msg = msg.format(self.id, attr_type.kind_id, attr_type.id)
-                _LOG.warn(msg)
+                _LOG.warning(msg)
         else:
             msg = (
                 'AttributeInstance "{0}" value set without AttributeKind '

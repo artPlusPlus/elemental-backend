@@ -1,4 +1,24 @@
 from ._resource import Resource
+
+from ._data_type_resource import DataTypeResource
+from ._data_instance_resource import DataInstanceResource
+
+from ._immutable_resource import ImmutableResource
+from ._immutable_type_resource import ImmutableTypeResource
+from ._immutable_instance_resource import ImmutableInstanceResource
+from ._immutable_object_type_resource import ImmutableObjectTypeResource
+from ._immutable_object_instance_resource import ImmutableObjectInstanceResource
+from ._immutable_field_type_resource import ImmutableFieldTypeResource
+from ._immutable_field_instance_resource import ImmutableFieldInstanceResource
+
+from ._mutable_resource import MutableResource
+from ._mutable_type_resource import MutableTypeResource
+from ._mutable_instance_resource import MutableInstanceResource
+from ._mutable_object_type_resource import MutableObjectTypeResource
+from ._mutable_object_instance_resource import MutableObjectInstanceResource
+from ._mutable_field_type_resource import MutableFieldTypeResource
+from ._mutable_field_instance_resource import MutableFieldInstanceResource
+
 from ._resource_type import ResourceType
 from ._resource_instance import ResourceInstance
 from ._content_type import ContentType

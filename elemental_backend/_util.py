@@ -1,4 +1,5 @@
 import logging
+from collections import deque
 
 from elemental_core.util import (
     process_elemental_class_value,
@@ -67,6 +68,18 @@ def process_handler_key(event, action, resource_type):
         return event, action, resource_type
 
     return None
+
+
+def iter_subclasses(base_class):
+    classes = deque()
+    classes.append(base_class)
+
+    while classes:
+        cls = classes.popleft()
+        classes.extend(cls.__subclassess__())
+        if cls is base_class:
+            continue
+        yield cls
 
 
 # def resolve_resource_type(resource_inst_proxy, model_resources_proxy):

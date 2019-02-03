@@ -1,13 +1,17 @@
-from elemental_core import ElementalBase
+from elemental_core import (
+    ElementalBase,
+    Hook,
+    ValueChangedHookData,
+    NO_VALUE
+)
 from elemental_core.util import process_uuid_value
-
-from ._property_changed_hook import PropertyChangedHook
 
 
 class Resource(ElementalBase):
     """
     Base class for content data.
     """
+    id_changed = Hook()
 
     @property
     def id(self):
@@ -25,24 +29,13 @@ class Resource(ElementalBase):
             msg = msg.format(value)
             raise ValueError(msg)
 
+        if value == self._id:
+            return
+
         original_value = self._id
-        if value != original_value:
-            self._id = value
-            self.id_changed(self, original_value, value)
+        self._id = value
 
-    @property
-    def id_changed(self):
-        return self._id_changed
-
-    @id_changed.setter
-    def id_changed(self, value):
-        if value is not self._id_changed:
-            raise TypeError('id_changed cannot be set')
-
-    @id_changed.setter
-    def id_changed(self, value):
-        if value is not self._id_changed:
-            raise TypeError('id_changed cannot be set')
+        self._on_id_changed(original_value, value)
 
     def __init__(self, id=None):
         """
@@ -54,8 +47,58 @@ class Resource(ElementalBase):
         super(Resource, self).__init__()
 
         self._id = None
-        self._stale = True
-
-        self._id_changed = PropertyChangedHook()
 
         self.id = id
+
+    @classmethod
+    def iter_hooks(cls):
+        pass
+
+    @classmethod
+    def iter_forward_references(cls):
+        pass
+
+    def _on_id_changed(self, original_value, current_value):
+        data = ValueChangedHookData(original_value, current_value)
+        self._id_changed(self, data)
+
+    def _set_data_id(
+            self, value, data_id_attr, data_ref,
+            content_changed_handler, on_data_id_changed, on_data_content_changed):
+        value = process_uuid_value(value)
+
+        if value == getattr(self, data_id_attr):
+            return
+
+        original_data_content = self._disconnect_from_data_ref(
+            data_ref, content_changed_handler)
+
+        original_value = getattr(self, data_id_attr)
+        setattr(self, data_id_attr, value)
+
+        current_data_content = self._connect_to_data_ref(
+            data_ref, content_changed_handler)
+
+        on_data_id_changed(original_value, value)
+        if original_data_content != current_data_content:
+            on_data_content_changed(original_data_content, current_data_content)
+
+    @staticmethod
+    def _disconnect_from_data_ref(ref, content_changed_handler):
+        data_content = NO_VALUE
+        data = ref()
+        if data:
+            data.content_changed -= content_changed_handler
+            data_content = data.content
+
+        return data_content
+
+    @staticmethod
+    def _connect_to_data_ref(ref, content_changed_handler):
+        data_content = NO_VALUE
+        data = ref()
+        if data:
+            data.content_changed += content_changed_handler
+            data_content = data.content
+
+        return data_content

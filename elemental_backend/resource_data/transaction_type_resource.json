@@ -1,0 +1,308 @@
+[
+  {
+    "type": "ImmutableObjectTypeResource",
+    "id": "63e17c3b-18dc-4903-9e87-8c26e03420f4",
+    "label_data_id": "2bd21918-6299-444e-a439-5aa2b07d2a1c",
+    "extends_type_ids_data_id": "cfff120d-ff72-4f71-881d-f7035f00894a",
+    "field_type_ids_data_id": "3750098c-52df-498d-9fbc-393fec648ed1"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "2bd21918-6299-444e-a439-5aa2b07d2a1c",
+    "content": "Transaction"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "cfff120d-ff72-4f71-881d-f7035f00894a",
+    "content": []
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "3750098c-52df-498d-9fbc-393fec648ed1",
+    "content": [
+      "419d28d3-b16d-45a5-beeb-61d9d8d76eaf"
+    ]
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "419d28d3-b16d-45a5-beeb-61d9d8d76eaf",
+    "label_data_id": "575fd9e8-cb3d-44e5-b61b-855aab2c4edb",
+    "kind_id_data_id": "5d26b808-e420-41ef-b3e5-ff70a3d21937",
+    "kind_data_data_id": "85ec53a5-646f-483b-8f37-e9933cb6f62c"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "575fd9e8-cb3d-44e5-b61b-855aab2c4edb",
+    "content": "ancestor_id"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "5d26b808-e420-41ef-b3e5-ff70a3d21937",
+    "content": "ResourceReference"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "85ec53a5-646f-483b-8f37-e9933cb6f62c",
+    "content": {
+      "compatible_resource_type_ids": [
+        "63e17c3b-18dc-4903-9e87-8c26e03420f4"
+      ]
+    }
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "action"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "resource_type"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "resource_id"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "inbound_format"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "inbound_payload"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "outbound_format"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "outbound_payload"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "data"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "errors"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "",
+    "label_data_id": "",
+    "kind_id_data_id": "",
+    "kind_data_data_id": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": "status"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": ""
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "",
+    "content": {}
+  }
+]

@@ -1,0 +1,60 @@
+[
+  {
+    "type": "ImmutableObjectType",
+    "id": "c9568d02-7c62-414b-84d6-89dc57372742",
+    "label_data_id": "4d3bd582-74a5-4f5a-96d0-9c3cd0aa3010",
+    "extends_type_ids_data_id": "7b1797e4-a7a8-4712-b827-d6702ba11683",
+    "field_type_ids_data_id": "4608d2fa-5365-438e-b8bd-d19e6242e7c2"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "4d3bd582-74a5-4f5a-96d0-9c3cd0aa3010",
+    "content": "PutValueFragmentType"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "7b1797e4-a7a8-4712-b827-d6702ba11683",
+    "content": [
+      "1b470d07-fdf7-4e90-845e-63d0011bbc84"
+    ]
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "4608d2fa-5365-438e-b8bd-d19e6242e7c2",
+    "content": [
+      "4d85b634-f452-4b8a-998a-cde8d35c07dc"
+    ]
+  },
+  {
+    "type": "ImmutableFieldType",
+    "id": "4d85b634-f452-4b8a-998a-cde8d35c07dc",
+    "label_data_id": "a5a489d3-a99c-4458-86d4-586a59b0b723",
+    "kind_id_data_id": "1561b650-c158-4ad2-abe2-d035f6be9141",
+    "kind_data_data_id": "fcfa7360-e4bb-4931-ac50-f1cfc4a18808"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "a5a489d3-a99c-4458-86d4-586a59b0b723",
+    "content": "data"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "1561b650-c158-4ad2-abe2-d035f6be9141",
+    "content": "ResourceReference"
+  },
+  {
+    "type": "DataInstance",
+    "type_resource_id": "cd516412-88ce-4a98-bf56-dfd519b0da14",
+    "id": "fcfa7360-e4bb-4931-ac50-f1cfc4a18808",
+    "content": {
+      "compatible_resource_type_ids": [
+        "cd516412-88ce-4a98-bf56-dfd519b0da14"
+      ]
+    }
+  }
+]

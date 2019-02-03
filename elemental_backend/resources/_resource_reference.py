@@ -1,9 +1,86 @@
-import weakref
 import logging
+from typing import Callable
+import weakref
 from functools import partial
 
 
 _LOG = logging.getLogger(__name__)
+
+
+class BoundForwardReference(object):
+    @property
+    def resolver(self):
+        return self._resolver
+
+    @resolver.setter
+    def resolver(self, value: Callable):
+        try:
+            self._resolver = weakref.WeakMethod(value)
+        except TypeError:
+            self._resolver = weakref.ref(value)
+
+    def __init__(self, instance, resource_key_fget):
+        super(BoundForwardReference, self).__init__()
+
+        self._instance_ref = weakref.ref(instance)
+        self._resource_key_fget = weakref.WeakMethod(resource_key_fget)
+        self._resolver = None
+
+    def __get__(self, instance, owner=None):
+        if not instance:
+            return self
+
+        if self._resource_key_fget is None:
+            # Should never get here, but just in case
+            msg = 'ResourceReference not attached to a getter method.'
+            raise AttributeError(msg)
+
+        resolver = self._resolver
+        if isinstance(resolver, weakref.ref):
+            resolver = resolver()
+        if not resolver:
+            msg = 'Failed to resolve Resource: Resolver reference dead'
+            raise RuntimeError(msg)
+
+        resource_key = self._resource_key_fget(instance)
+
+        try:
+            result = resolver(resource_key)
+        except Exception as e:
+            msg = 'Failed to resolve Resource reference: "{0}" - {1}: {2}'
+            msg = msg.format(resource_key, type(e).__name__, e)
+            _LOG.debug(msg)
+        else:
+            msg = 'Resolved Resource: "{0}"'
+            msg = msg.format(repr(result))
+            _LOG.debug(msg)
+
+        return result
+
+
+class ForwardReference(object):
+    def __init__(self, resource_key_fget):
+        super(ForwardReference, self).__init__()
+
+        self._resource_key_fget = resource_key_fget
+        self._bound_fwd_refs = weakref.WeakKeyDictionary()
+
+    def __get__(self, instance, owner=None):
+        if not instance:
+            return self
+
+        try:
+            result = self._bound_fwd_refs[instance]
+        except KeyError:
+            result = BoundForwardReference(instance, self._resource_key_fget)
+            self._bound_fwd_refs[instance] = result
+
+        return result
+
+    def __set__(self, instance, value):
+        if self._bound_fwd_refs.get(instance) is value:
+            return
+        raise ValueError()
 
 
 class ResourceReference(object):
@@ -12,7 +89,7 @@ class ResourceReference(object):
         to another `Resource` object.
 
     The implementation of this mechanism relies on a `Model` to provide a
-    reference to its resources table upon registration of a `Resources`.
+    reference to its resources table upon registration of a `Resource`.
     Currently, multiple `Model` instances can exist at the same time. Being a
     descriptor, `ResourceReference` instances exist in a broader  scope (class
     instances) than `Model` instances. Thus, `ResourceReference` instances must

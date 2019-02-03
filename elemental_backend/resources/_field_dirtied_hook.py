@@ -2,12 +2,16 @@ import weakref
 from functools import partial
 from collections import namedtuple
 
-from elemental_backend.resources._hook import Hook
+from elemental_core import Hook
 
 
 FieldDirtiedData = namedtuple(
     'FieldDirtiedEventArgs',
-    ['value_key', 'session_key'])
+    [
+        'value_key',
+        'session_key'
+    ]
+)
 
 
 class FieldDirtiedHook(Hook):

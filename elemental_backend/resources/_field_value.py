@@ -1,8 +1,6 @@
 import time
 
-from elemental_core import NO_VALUE
-
-from ._hook import Hook
+from elemental_core import NO_VALUE, Hook
 
 
 class FieldValue(object):
